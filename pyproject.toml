@@ -1,0 +1,46 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "rica"
+version = "0.1.0"
+description = "Open-source AI assistant for Discord — self-hosted, BYOK"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+authors = [
+    { name = "Rishabh Kumar Singh", email = "rishabh@nexurlabs.com" },
+]
+keywords = ["discord", "ai", "bot", "self-hosted", "byok", "assistant"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Communications :: Chat",
+]
+
+dependencies = [
+    "discord.py>=2.3.0",
+    "python-dotenv>=1.0.0",
+    "httpx>=0.27.0",
+    "pyyaml>=6.0",
+    "cryptography>=42.0",
+    "fastapi>=0.115.0",
+    "uvicorn>=0.30.0",
+    "python-jose[cryptography]>=3.3.0",
+    "pydantic>=2.0",
+    "rich>=13.0",
+    "inquirer>=3.0",
+    "click>=8.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+]
+
+[project.scripts]
+rica = "cli.main:main"

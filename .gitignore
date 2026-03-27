@@ -1,0 +1,36 @@
+# Rica
+*.pyc
+__pycache__/
+*.pyo
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+
+# Virtual Environment
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Rica data (local config and storage)
+.rica/
+
+# Environment
+.env
+.env.local
+
+# Node modules (dashboard web)
+node_modules/
+.next/
+out/
+
+# OS
+.DS_Store
+Thumbs.db
