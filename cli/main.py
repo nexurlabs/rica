@@ -112,6 +112,7 @@ def status():
 
     api_key = provider.get("api_key", "")
     table.add_row("API Key", f"{'•' * 8}{api_key[-4:]}" if api_key else "❌ Not set")
+    table.add_row("Model", provider.get("model", "provider default"))
 
     trigger = config.get("trigger_word", "Rica")
     table.add_row("Trigger Word", trigger)
@@ -211,6 +212,10 @@ def _init_from_config(config: dict):
     if provider_conf.get("api_key"):
         encrypted_key = encryption.encrypt(provider_conf["api_key"])
         updates["api_keys.global_key"] = encrypted_key
+
+    # Set default model
+    if provider_conf.get("model"):
+        updates["api_keys.model"] = provider_conf["model"]
 
     # Set trigger word
     if config.get("trigger_word"):

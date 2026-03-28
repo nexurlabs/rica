@@ -128,6 +128,27 @@ def run_onboard():
                 "name": provider_id,
                 "api_key": api_key,
             }
+
+            # Optional model selection
+            console.print()
+            console.print("[bold]Step 3.5/4: Model Selection[/bold]")
+            console.print("─" * 40)
+            console.print("  [dim]Fetching available models for this provider...[/dim]")
+            models, model_error = _fetch_provider_models(api_key, provider_id)
+            if models:
+                for idx, model_name in enumerate(models, start=1):
+                    console.print(f"    [{idx}] {model_name}")
+                console.print()
+                selected = Prompt.ask(
+                    "  Select default model",
+                    choices=[str(i) for i in range(1, len(models) + 1)],
+                    default="1",
+                )
+                config["provider"]["model"] = models[int(selected) - 1]
+                console.print(f"  ✅ Model selected — [bold]{config['provider']['model']}[/bold]")
+            else:
+                console.print(f"  [yellow]Could not fetch models automatically[/yellow]: {model_error}")
+                console.print("  [dim]Continuing without explicit model selection. Provider default will be used.[/dim]")
             break
         else:
             console.print(f"\r  ❌ {reason}        ")
@@ -220,6 +241,21 @@ def _validate_api_key(api_key: str, provider_id: str) -> tuple[bool, str]:
         return False, f"Validation error: {e}"
 
 
+def _fetch_provider_models(api_key: str, provider_id: str) -> tuple[list[str], str | None]:
+    """Fetch available models for a validated provider key."""
+    try:
+        from providers.factory import get_provider
+        loop = asyncio.new_event_loop()
+        provider = get_provider(provider_id, api_key)
+        models = loop.run_until_complete(provider.get_models())
+        loop.close()
+        if not models:
+            return [], "No models returned by provider"
+        return models, None
+    except Exception as e:
+        return [], str(e)
+
+
 def _sync_config_to_db(config: dict, db, encryption):
     """Push config.yaml values into the local database."""
     provider = config.get("provider", {})
@@ -232,6 +268,9 @@ def _sync_config_to_db(config: dict, db, encryption):
 
     if provider.get("api_key"):
         updates["api_keys.global_key"] = encryption.encrypt(provider["api_key"])
+
+    if provider.get("model"):
+        updates["api_keys.model"] = provider["model"]
 
     if config.get("trigger_word"):
         updates["trigger_word"] = config["trigger_word"]
