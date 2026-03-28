@@ -44,3 +44,6 @@ dev = [
 
 [project.scripts]
 rica = "cli.main:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["cli", "bot", "dashboard"]

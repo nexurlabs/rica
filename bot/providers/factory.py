@@ -53,10 +53,16 @@ _KEY_PREFIXES = [
 
 
 def _detect_provider_mismatch(api_key: str, target_provider: str) -> str | None:
-    """Check if the key obviously belongs to a DIFFERENT provider."""
+    """Check if the key obviously belongs to a DIFFERENT provider.
+
+    Important: stop at the first matching prefix, because some providers have
+    more specific prefixes that also match more general ones (e.g. anthropic
+    `sk-ant-...` also starts with OpenAI's `sk-`). `_KEY_PREFIXES` is ordered
+    most-specific-first for this reason.
+    """
     for provider_name, prefix in _KEY_PREFIXES:
-        if api_key.startswith(prefix) and provider_name != target_provider:
-            return provider_name
+        if api_key.startswith(prefix):
+            return None if provider_name == target_provider else provider_name
     return None
 
 

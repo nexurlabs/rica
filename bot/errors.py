@@ -1,8 +1,7 @@
 # Rica - Error Handling
 # Generic user-facing errors + structured logging to Firestore
 
-import hashlib
-import time
+import uuid
 
 
 class BotError(Exception):
@@ -16,8 +15,7 @@ class BotError(Exception):
 
 def _generate_error_id() -> str:
     """Generate a short, unique error ID for traceability."""
-    raw = f"{time.time():.6f}"
-    return hashlib.sha256(raw.encode()).hexdigest()[:8]
+    return uuid.uuid4().hex[:8]
 
 
 def safe_error_message(

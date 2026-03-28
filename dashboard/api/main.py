@@ -8,10 +8,12 @@ from fastapi.middleware.cors import CORSMiddleware
 # =============================================================================
 # CENTRALIZED PATH SETUP
 # =============================================================================
+_api_path = os.path.abspath(os.path.dirname(__file__))
 _bot_path = os.path.join(os.path.dirname(__file__), "..", "..", "bot")
 _bot_path = os.path.abspath(_bot_path)
-if _bot_path not in sys.path:
-    sys.path.insert(0, _bot_path)
+for path in (_api_path, _bot_path):
+    if path not in sys.path:
+        sys.path.insert(0, path)
 
 app = FastAPI(
     title="Rica Dashboard API",
