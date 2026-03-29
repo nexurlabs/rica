@@ -49,6 +49,13 @@ py -m venv .venv
 $pythonExe = Join-Path $RepoDir '.venv\Scripts\python.exe'
 $ricaExe = Join-Path $RepoDir '.venv\Scripts\rica.exe'
 
+# Ensure the .venv\Scripts folder is in the current session's PATH
+# so any post-install tools/commands can be found immediately without the user getting PATH warnings.
+$venvScripts = Join-Path $RepoDir '.venv\Scripts'
+if ($env:Path -notmatch [regex]::Escape($venvScripts)) {
+    $env:Path = "$venvScripts;$env:Path"
+}
+
 Write-Step 'Upgrading pip'
 & $pythonExe -m pip install --upgrade pip
 
