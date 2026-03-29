@@ -1,7 +1,7 @@
 # Rica - Session Manager
 # Per-channel sessions for Responder/Moderator/DB Manager, global session for Agent
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from config import (
     RESPONDER_SESSION_TIMEOUT,
     AGENT_SESSION_TIMEOUT,
@@ -23,6 +23,13 @@ TIMEOUTS = {
 CONTEXT_WORKERS = {"responder", "agent"}
 
 
+def _to_utc(dt: datetime) -> datetime:
+    """Normalize naive/legacy datetimes to UTC-aware ones."""
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc)
+
+
 class Session:
     """A single chat session with history."""
 
@@ -30,15 +37,15 @@ class Session:
         self.worker_type = worker_type
         self.channel_id = channel_id
         self.history = []  # List of {"role": "user"/"assistant", "content": "..."}
-        self.last_used = datetime.now()
-        self.created_at = datetime.now()
+        self.last_used = datetime.now(timezone.utc)
+        self.created_at = datetime.now(timezone.utc)
 
     def is_expired(self) -> bool:
         timeout = TIMEOUTS.get(self.worker_type, 30)
-        return datetime.now() - self.last_used > timedelta(minutes=timeout)
+        return datetime.now(timezone.utc) - _to_utc(self.last_used) > timedelta(minutes=timeout)
 
     def touch(self):
-        self.last_used = datetime.now()
+        self.last_used = datetime.now(timezone.utc)
 
     def add_message(self, role: str, content: str):
         self.history.append({"role": role, "content": content})
@@ -62,8 +69,8 @@ class Session:
         """Deserialize session from persistence."""
         session = cls(data["worker_type"], data.get("channel_id"))
         session.history = data.get("history", [])
-        session.last_used = datetime.fromisoformat(data["last_used"])
-        session.created_at = datetime.fromisoformat(data["created_at"])
+        session.last_used = _to_utc(datetime.fromisoformat(data["last_used"]))
+        session.created_at = _to_utc(datetime.fromisoformat(data["created_at"]))
         return session
 
 

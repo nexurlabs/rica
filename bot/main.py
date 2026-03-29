@@ -395,7 +395,15 @@ def main():
         return
 
     print("[Rica] Starting bot...")
-    client.run(DISCORD_BOT_TOKEN)
+    try:
+        client.run(DISCORD_BOT_TOKEN)
+    finally:
+        try:
+            import asyncio
+            from workers.moderator import moderator_worker
+            asyncio.run(moderator_worker.close())
+        except Exception:
+            pass
 
 
 if __name__ == "__main__":

@@ -26,18 +26,28 @@ class _Bucket:
         self.tokens = 0
         self.window_start = time.monotonic()
 
-    def allow(self) -> bool:
-        """Return True if the request is allowed, False if rate-limited."""
+    def _refresh(self) -> None:
         now = time.monotonic()
-        # Reset window if expired
         if now - self.window_start >= self.window:
             self.tokens = 0
             self.window_start = now
 
+    def can_allow(self) -> bool:
+        """Check capacity without consuming a token."""
+        self._refresh()
+        return self.tokens < self.limit
+
+    def consume(self) -> bool:
+        """Consume a token if available."""
+        self._refresh()
         if self.tokens < self.limit:
             self.tokens += 1
             return True
         return False
+
+    def allow(self) -> bool:
+        """Backward-compatible alias: consume a token if available."""
+        return self.consume()
 
     def is_stale(self) -> bool:
         """Return True if this bucket hasn't been used for 2 windows."""
@@ -85,7 +95,7 @@ class RateLimiter:
             self._user_buckets[user_key] = _Bucket(self.user_limit, self.user_window)
         user_bucket = self._user_buckets[user_key]
 
-        if not user_bucket.allow():
+        if not user_bucket.can_allow():
             retry = int(user_bucket.retry_after()) + 1
             return False, f"🕐 Slow down! Try again in {retry}s."
 
@@ -97,10 +107,13 @@ class RateLimiter:
             )
         ch_bucket = self._channel_buckets[ch_key]
 
-        if not ch_bucket.allow():
+        if not ch_bucket.can_allow():
             retry = int(ch_bucket.retry_after()) + 1
             return False, f"🕐 This channel is busy. Try again in {retry}s."
 
+        # Only consume after both checks pass.
+        user_bucket.consume()
+        ch_bucket.consume()
         return True, ""
 
     def _maybe_cleanup(self):

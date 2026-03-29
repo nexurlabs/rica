@@ -116,14 +116,25 @@ class ModeratorWorker:
 
     def _parse_response(self, response_text: str) -> dict:
         """Parse the Moderator's JSON response."""
+        cleaned = response_text.strip()
+        if cleaned.startswith("```json"):
+            cleaned = cleaned.removeprefix("```json").removesuffix("```").strip()
+        elif cleaned.startswith("```"):
+            cleaned = cleaned.removeprefix("```").removesuffix("```").strip()
+
         try:
-            return json.loads(response_text)
+            return json.loads(cleaned)
         except json.JSONDecodeError:
             return {
                 "moderation": {"action": "none", "violation_detected": False},
                 "search": {"needed": False},
                 "context_for_responder": "",
             }
+
+    async def close(self):
+        """Clean up aiohttp resources on shutdown."""
+        if self._serper_session is not None and not self._serper_session.closed:
+            await self._serper_session.close()
 
     async def _serper_search(self, query: str, api_key: str, num_results: int = 5) -> str:
         """Perform a web search using Serper API."""
