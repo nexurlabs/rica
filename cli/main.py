@@ -3,6 +3,7 @@
 
 import sys
 import os
+import subprocess
 import click
 from pathlib import Path
 
@@ -32,7 +33,8 @@ def onboard():
 
 @main.command()
 @click.option("--no-dashboard", is_flag=True, help="Start bot only, skip dashboard API")
-def start(no_dashboard):
+@click.option("--with-frontend", is_flag=True, help="Also start the dashboard frontend dev server on port 3000")
+def start(no_dashboard, with_frontend):
     """Start the Rica bot (and dashboard API)."""
     if not CONFIG_PATH.exists():
         click.echo("❌ No config found. Run 'rica onboard' first.")
@@ -55,7 +57,16 @@ def start(no_dashboard):
         import threading
         dashboard_thread = threading.Thread(target=_start_dashboard, daemon=True)
         dashboard_thread.start()
-        click.echo("🌐 Dashboard API running at http://localhost:8000")
+        click.echo("🌐 Dashboard API running at: http://localhost:8000")
+
+    frontend_url = "http://localhost:3000"
+    if with_frontend:
+        _start_dashboard_frontend()
+        click.echo(f"🖥️  Dashboard UI starting at: {frontend_url}")
+    elif not no_dashboard:
+        click.echo(f"🖥️  Dashboard UI: {frontend_url}")
+        click.echo("   If the page does not load yet, start it in another terminal:")
+        click.echo("   cd ~/.nexurlabs/rica/dashboard/web && npm run dev")
 
     # Start the bot
     click.echo("🤖 Starting Rica bot...")
@@ -246,6 +257,25 @@ def _start_dashboard():
 
     from dashboard.api.main import app
     uvicorn.run(app, host="127.0.0.1", port=8000, log_level="warning")
+
+
+def _start_dashboard_frontend():
+    """Start the Next.js dashboard frontend in the background."""
+    web_dir = Path(__file__).resolve().parent.parent / "dashboard" / "web"
+    if not web_dir.exists():
+        click.echo("⚠️  Dashboard web folder not found; skipping frontend startup.")
+        return
+
+    try:
+        subprocess.Popen(
+            ["npm", "run", "dev"],
+            cwd=str(web_dir),
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True,
+        )
+    except FileNotFoundError:
+        click.echo("⚠️  npm not found; cannot auto-start dashboard frontend.")
 
 
 if __name__ == "__main__":

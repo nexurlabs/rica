@@ -66,6 +66,12 @@ Write-Step 'Launching Rica onboarding'
 
 $startNow = Read-Host "Start Rica now? [Y/n]"
 if ([string]::IsNullOrWhiteSpace($startNow) -or $startNow -match '^[Yy]$') {
+  $startFrontend = Read-Host "Also start the dashboard frontend on http://localhost:3000? [Y/n]"
+  if ([string]::IsNullOrWhiteSpace($startFrontend) -or $startFrontend -match '^[Yy]$') {
+    Write-Step 'Starting Rica + dashboard frontend'
+    & $ricaExe start --with-frontend
+    exit $LASTEXITCODE
+  }
   Write-Step 'Starting Rica'
   & $ricaExe start
   exit $LASTEXITCODE

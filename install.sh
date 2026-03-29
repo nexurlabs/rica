@@ -133,6 +133,11 @@ main() {
   printf '\nRica onboarding finished.\n'
   read -r -p 'Start Rica now? [Y/n] ' start_now
   if [[ -z "${start_now}" || "${start_now}" =~ ^[Yy]$ ]]; then
+    read -r -p 'Also start the dashboard frontend on http://localhost:3000? [Y/n] ' start_frontend
+    if [[ -z "${start_frontend}" || "${start_frontend}" =~ ^[Yy]$ ]]; then
+      log "Starting Rica + dashboard frontend"
+      exec rica start --with-frontend
+    fi
     log "Starting Rica"
     exec rica start
   fi

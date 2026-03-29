@@ -26,6 +26,7 @@ These installers will:
 - prepare the environment
 - launch onboarding automatically
 - offer to start Rica immediately after onboarding
+- optionally start the dashboard frontend too
 
 ### Manual start after install
 ```bash
@@ -41,6 +42,7 @@ rica start
 5. installs dashboard web dependencies
 6. starts onboarding automatically
 7. asks if you want to start Rica immediately
+8. optionally starts the dashboard frontend on `localhost:3000`
 
 ---
 
