@@ -130,6 +130,13 @@ main() {
   log "Launching Rica onboarding"
   rica onboard
 
+  printf '\nRica onboarding finished.\n'
+  read -r -p 'Start Rica now? [Y/n] ' start_now
+  if [[ -z "${start_now}" || "${start_now}" =~ ^[Yy]$ ]]; then
+    log "Starting Rica"
+    exec rica start
+  fi
+
   printf '\nRica is installed. Next steps:\n'
   printf '  source %s/.venv/bin/activate\n' "$repo_dir"
   printf '  cd %s\n' "$repo_dir"

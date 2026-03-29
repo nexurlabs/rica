@@ -25,6 +25,7 @@ These installers will:
 - install Python + web dependencies
 - prepare the environment
 - launch onboarding automatically
+- offer to start Rica immediately after onboarding
 
 ### Manual start after install
 ```bash
@@ -39,6 +40,7 @@ rica start
 4. installs backend dependencies
 5. installs dashboard web dependencies
 6. starts onboarding automatically
+7. asks if you want to start Rica immediately
 
 ---
 

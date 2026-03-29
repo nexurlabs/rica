@@ -64,6 +64,13 @@ Pop-Location
 Write-Step 'Launching Rica onboarding'
 & $ricaExe onboard
 
+$startNow = Read-Host "Start Rica now? [Y/n]"
+if ([string]::IsNullOrWhiteSpace($startNow) -or $startNow -match '^[Yy]$') {
+  Write-Step 'Starting Rica'
+  & $ricaExe start
+  exit $LASTEXITCODE
+}
+
 Write-Host "`nRica is installed. Next steps:" -ForegroundColor Green
 Write-Host "  cd $RepoDir"
 Write-Host "  .\.venv\Scripts\Activate.ps1"
