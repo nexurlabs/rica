@@ -42,12 +42,13 @@ console = Console()
 
 def run_onboard():
     """Run the interactive onboarding wizard."""
+    from cli.main import VERSION
 
     # Header
     console.print()
     console.print(Panel.fit(
         "[bold white]Rica — AI Discord Assistant[/bold white]\n"
-        "[dim]v0.1.0 · Open Source · Self-Hosted[/dim]",
+        f"[dim]v{VERSION} · Open Source · Self-Hosted[/dim]",
         border_style="bright_yellow",
         padding=(1, 4),
     ))

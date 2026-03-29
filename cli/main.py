@@ -5,7 +5,11 @@ import sys
 import os
 import subprocess
 import click
+import httpx
 from pathlib import Path
+
+# Rica version
+VERSION = "0.1.0"
 
 # Add bot/ to path so storage/providers/etc. are importable
 _bot_path = os.path.join(os.path.dirname(__file__), "..", "bot")
@@ -17,8 +21,25 @@ RICA_HOME = Path(os.environ.get("RICA_HOME", Path.home() / ".rica"))
 CONFIG_PATH = RICA_HOME / "config.yaml"
 
 
+def _check_for_updates():
+    """Check GitHub for the latest version and print a warning if outdated."""
+    try:
+        url = "https://raw.githubusercontent.com/nexurlabs/rica/main/pyproject.toml"
+        resp = httpx.get(url, timeout=3.0)
+        if resp.status_code == 200:
+            import re
+            match = re.search(r'version\s*=\s*"([^"]+)"', resp.text)
+            if match:
+                latest_version = match.group(1)
+                if latest_version != VERSION:
+                    click.echo(f"✨ [Update Available] You are running v{VERSION}, but v{latest_version} is out!")
+                    click.echo("   Run 'rica update' to upgrade.\n")
+    except Exception:
+        pass
+
+
 @click.group()
-@click.version_option(version="0.1.0", prog_name="Rica")
+@click.version_option(version=VERSION, prog_name="Rica")
 def main():
     """Rica — Open-source AI assistant for Discord."""
     pass
@@ -36,6 +57,9 @@ def onboard():
 @click.option("--with-frontend", is_flag=True, help="Also start the dashboard frontend dev server on port 3000")
 def start(no_dashboard, with_frontend):
     """Start the Rica bot (and dashboard API)."""
+    
+    _check_for_updates()
+    
     if not CONFIG_PATH.exists():
         click.echo("❌ No config found. Run 'rica onboard' first.")
         sys.exit(1)
@@ -95,6 +119,8 @@ def status():
     if not CONFIG_PATH.exists():
         click.echo("❌ No config found. Run 'rica onboard' first.")
         return
+
+    _check_for_updates()
 
     import yaml
     from rich.console import Console
