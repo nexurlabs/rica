@@ -122,6 +122,9 @@ async def run_pipeline(message: discord.Message, config: dict):
     channel_id = str(message.channel.id)
     triggered = is_triggered(message, config.get("trigger_word", "Rica"))
 
+    if triggered:
+        await message.channel.typing()
+
     from workers.db_manager import db_manager_worker
     from workers.moderator import moderator_worker
     from workers.responder import responder_worker
@@ -173,6 +176,7 @@ async def run_pipeline(message: discord.Message, config: dict):
 async def run_agent_pipeline(message: discord.Message, config: dict):
     """Run the Agent pipeline (separate from community pipeline)."""
     server_id = str(message.guild.id)
+    await message.channel.typing()
 
     from workers.agent import agent_worker
 
