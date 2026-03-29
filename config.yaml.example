@@ -1,0 +1,23 @@
+# Rica Configuration Example
+# Copy this to ~/.rica/config.yaml after running 'rica onboard'
+# OR let 'rica onboard' generate it for you automatically.
+
+discord:
+  token: "YOUR_DISCORD_BOT_TOKEN_HERE"
+
+provider:
+  name: "groq"                      # google_ai | openai | anthropic | openrouter | groq
+  api_key: "YOUR_API_KEY_HERE"
+  model: ""                          # Leave empty to use provider default
+
+workers:
+  responder:
+    enabled: true                   # AI chat responses to messages
+  moderator:
+    enabled: false                  # Automatic content moderation
+  agent:
+    enabled: false                  # Advanced AI for designated users (code execution)
+  db_manager:
+    enabled: false                  # Natural language database operations
+
+trigger_word: "Rica"               # Bot responds when this word starts a message
