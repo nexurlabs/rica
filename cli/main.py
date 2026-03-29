@@ -196,6 +196,96 @@ def doctor():
     console.print(f"\n  {'⚠️' if issues else '✅'} {issues} issue(s) found.\n")
 
 
+@main.command()
+def update():
+    """Update Rica to the latest version."""
+    from rich.console import Console
+    console = Console()
+    
+    install_dir = Path(__file__).resolve().parent.parent
+    if not (install_dir / ".git").exists():
+        console.print("❌ Rica does not appear to be a git repository. Cannot auto-update.")
+        return
+
+    console.print("\n[bold]Updating Rica...[/bold]\n")
+    try:
+        console.print("  [dim]Pulling latest changes...[/dim]")
+        subprocess.run(
+            ["git", "pull", "--ff-only"], 
+            cwd=str(install_dir), 
+            check=True,
+            capture_output=True,
+            text=True
+        )
+        console.print("  ✅ Pulled latest code")
+
+        console.print("  [dim]Updating dependencies...[/dim]")
+        pip_cmd = sys.executable
+        subprocess.run(
+            [pip_cmd, "-m", "pip", "install", "-r", "bot/requirements.txt", "-r", "dashboard/api/requirements.txt"],
+            cwd=str(install_dir),
+            check=True,
+            capture_output=True,
+            text=True
+        )
+        
+        web_dir = install_dir / "dashboard" / "web"
+        if web_dir.exists():
+            console.print("  [dim]Updating web dependencies...[/dim]")
+            npm_cmd = "npm.cmd" if os.name == "nt" else "npm"
+            subprocess.run(
+                [npm_cmd, "install", "--no-fund", "--no-audit", "--loglevel=error"],
+                cwd=str(web_dir),
+                check=True,
+                capture_output=True,
+                text=True
+            )
+        
+        console.print("\n  🎉 [bold green]Rica updated successfully![/bold green]\n")
+    except subprocess.CalledProcessError as e:
+        console.print(f"\n  ❌ [bold red]Update failed![/bold red]")
+        if e.stderr:
+            console.print(f"  [red]{e.stderr.strip()}[/red]")
+        sys.exit(1)
+
+
+@main.command()
+def stop():
+    """Stop any running Rica processes."""
+    from rich.console import Console
+    import psutil
+    console = Console()
+    
+    console.print("\n[bold]Stopping Rica processes...[/bold]\n")
+    
+    killed = 0
+    current_pid = os.getpid()
+    
+    for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+        try:
+            # Skip ourselves
+            if proc.info['pid'] == current_pid:
+                continue
+                
+            cmdline = proc.info.get('cmdline') or []
+            cmd_str = ' '.join(cmdline).lower()
+            
+            is_rica = 'rica start' in cmd_str
+            is_next = 'next dev' in cmd_str and 'dashboard' in cmd_str
+            
+            if is_rica or is_next:
+                proc.terminate()
+                killed += 1
+                console.print(f"  🛑 Stopped process {proc.info['pid']} ({proc.info['name']})")
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+            pass
+            
+    if killed > 0:
+        console.print(f"\n  ✅ Stopped {killed} processes.\n")
+    else:
+        console.print("  ℹ️  No running Rica processes found.\n")
+
+
 def _init_from_config(config: dict):
     """Initialize local storage from config.yaml values."""
     from storage.local_db import firestore_client
