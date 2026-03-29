@@ -49,11 +49,20 @@ py -m venv .venv
 $pythonExe = Join-Path $RepoDir '.venv\Scripts\python.exe'
 $ricaExe = Join-Path $RepoDir '.venv\Scripts\rica.exe'
 
-# Ensure the .venv\Scripts folder is in the current session's PATH
-# so any post-install tools/commands can be found immediately without the user getting PATH warnings.
+# Ensure the .venv\Scripts folder is permanently in the User PATH
+# so the 'rica' command works even after the terminal is closed.
 $venvScripts = Join-Path $RepoDir '.venv\Scripts'
+
+# Update current session PATH so the rest of the script works
 if ($env:Path -notmatch [regex]::Escape($venvScripts)) {
     $env:Path = "$venvScripts;$env:Path"
+}
+
+# Update permanent User PATH in Windows registry
+$userPath = [Environment]::GetEnvironmentVariable("Path", "User")
+if ($userPath -notmatch [regex]::Escape($venvScripts)) {
+    Write-Host "  Adding Rica to User PATH..." -ForegroundColor DarkGray
+    [Environment]::SetEnvironmentVariable("Path", "$userPath;$venvScripts", "User")
 }
 
 Write-Step 'Upgrading pip'
