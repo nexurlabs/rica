@@ -84,6 +84,7 @@ if ([string]::IsNullOrWhiteSpace($startNow) -or $startNow -match '^[Yy]$') {
 }
 
 Write-Host "`nRica is installed. Rica commands:" -ForegroundColor Green
-Write-Host "  rica start --with-frontend"
-Write-Host "  rica stop"
-Write-Host "  rica update`n"
+Write-Host "  rica start --with-frontend -d   (Run in background)"
+Write-Host "  rica logs                       (View background logs)"
+Write-Host "  rica stop                       (Stop background bot)"
+Write-Host "  rica update                     (Update to latest version)`n"

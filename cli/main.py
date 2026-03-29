@@ -55,11 +55,16 @@ def onboard():
 @main.command()
 @click.option("--no-dashboard", is_flag=True, help="Start bot only, skip dashboard API")
 @click.option("--with-frontend", is_flag=True, help="Also start the dashboard frontend dev server on port 3000")
-def start(no_dashboard, with_frontend):
+@click.option("--daemon", "-d", is_flag=True, help="Run Rica in the background")
+def start(no_dashboard, with_frontend, daemon):
     """Start the Rica bot (and dashboard API)."""
     
     _check_for_updates()
     
+    if daemon:
+        _start_daemon(no_dashboard, with_frontend)
+        return
+
     if not CONFIG_PATH.exists():
         click.echo("❌ No config found. Run 'rica onboard' first.")
         sys.exit(1)
@@ -310,6 +315,71 @@ def stop():
         console.print(f"\n  ✅ Stopped {killed} processes.\n")
     else:
         console.print("  ℹ️  No running Rica processes found.\n")
+
+
+@main.command()
+def logs():
+    """Tail the Rica background logs."""
+    log_file = RICA_HOME / "rica.log"
+    if not log_file.exists():
+        click.echo("No logs found. Is Rica running?")
+        return
+        
+    click.echo(f"Tailing {log_file} (Ctrl+C to exit)...\n")
+    
+    # Simple tail -f equivalent
+    try:
+        if os.name == 'nt':
+            subprocess.run(["powershell", "-c", f"Get-Content -Path '{log_file}' -Wait -Tail 20"])
+        else:
+            subprocess.run(["tail", "-f", "-n", "20", str(log_file)])
+    except KeyboardInterrupt:
+        pass
+
+
+def _start_daemon(no_dashboard: bool, with_frontend: bool):
+    """Spawn Rica in the background and redirect output to a log file."""
+    import sys
+    from rich.console import Console
+    console = Console()
+    
+    log_file = RICA_HOME / "rica.log"
+    
+    cmd = [sys.executable, "-m", "cli.main", "start"]
+    if no_dashboard:
+        cmd.append("--no-dashboard")
+    if with_frontend:
+        cmd.append("--with-frontend")
+        
+    console.print("\n[bold]Starting Rica in the background...[/bold]")
+    
+    try:
+        with open(log_file, "a") as f:
+            if os.name == 'nt':
+                # Windows hidden process
+                CREATE_NO_WINDOW = 0x08000000
+                subprocess.Popen(
+                    cmd,
+                    stdout=f,
+                    stderr=subprocess.STDOUT,
+                    creationflags=CREATE_NO_WINDOW
+                )
+            else:
+                # Unix daemon
+                subprocess.Popen(
+                    cmd,
+                    stdout=f,
+                    stderr=subprocess.STDOUT,
+                    start_new_session=True
+                )
+                
+        console.print("  ✅ Rica is running in the background!")
+        console.print(f"  📝 Logs are writing to: {log_file}")
+        console.print("  💻 Run [bold cyan]rica logs[/bold cyan] to view them.")
+        console.print("  🛑 Run [bold red]rica stop[/bold red] to shut it down.\n")
+        
+    except Exception as e:
+        console.print(f"  ❌ Failed to start background process: {e}")
 
 
 def _init_from_config(config: dict):

@@ -143,9 +143,10 @@ main() {
   fi
 
   printf '\nRica is installed. Rica commands:\n'
-  printf '  rica start --with-frontend\n'
-  printf '  rica stop\n'
-  printf '  rica update\n\n'
+  printf '  rica start --with-frontend -d   (Run in background)\n'
+  printf '  rica logs                       (View background logs)\n'
+  printf '  rica stop                       (Stop background bot)\n'
+  printf '  rica update                     (Update to latest version)\n\n'
 }
 
 main "$@"
