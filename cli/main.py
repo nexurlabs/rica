@@ -424,21 +424,27 @@ def _start_daemon(no_dashboard: bool, with_frontend: bool):
     console.print("\n[bold]Starting Rica in the background...[/bold]")
 
     try:
-        with open(log_file, "a") as f:
+        daemon_env = os.environ.copy()
+        daemon_env.setdefault("PYTHONUTF8", "1")
+        daemon_env.setdefault("PYTHONIOENCODING", "utf-8")
+
+        with open(log_file, "a", encoding="utf-8", errors="replace") as f:
             if os.name == 'nt':
                 CREATE_NO_WINDOW = 0x08000000
                 proc = subprocess.Popen(
                     cmd,
                     stdout=f,
                     stderr=subprocess.STDOUT,
-                    creationflags=CREATE_NO_WINDOW
+                    creationflags=CREATE_NO_WINDOW,
+                    env=daemon_env,
                 )
             else:
                 proc = subprocess.Popen(
                     cmd,
                     stdout=f,
                     stderr=subprocess.STDOUT,
-                    start_new_session=True
+                    start_new_session=True,
+                    env=daemon_env,
                 )
 
         _write_pid(proc.pid)
