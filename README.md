@@ -10,18 +10,26 @@ Originally built by [NexurLabs](https://nexurlabs.com).
 
 ## Quick Start
 
+### macOS / Linux
 ```bash
-# Install
-pip install rica
+curl -fsSL https://raw.githubusercontent.com/nexurlabs/rica/main/install.sh | bash
+```
 
-# Setup (interactive wizard)
-rica onboard
+### Windows (PowerShell)
+```powershell
+powershell -c "irm https://raw.githubusercontent.com/nexurlabs/rica/main/install.ps1 | iex"
+```
 
-# Run
+These installers will:
+- clone or update the repo automatically
+- install Python + web dependencies
+- prepare the environment
+- launch onboarding automatically
+
+### Manual start after install
+```bash
+source .venv/bin/activate   # Windows: .\.venv\Scripts\Activate.ps1
 rica start
-
-# Open dashboard in browser
-rica dashboard
 ```
 
 ---
