@@ -23,9 +23,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const serverId = "local";
     const [botName, setBotName] = useState("Rica");
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [versionInfo, setVersionInfo] = useState<{ current: string, latest: string, update_available: boolean } | null>(null);
 
     useEffect(() => {
         api.getServer().then((s) => setBotName(s.server_name || "Rica")).catch(() => { });
+        api.getVersion().then(setVersionInfo).catch(() => { });
     }, []);
 
     // Close sidebar on route change (mobile)
@@ -75,8 +77,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
                 <div className="mt-4 pt-4" style={{ borderTop: "1px solid var(--border)" }}>
                     <p className="text-xs text-center" style={{ color: "var(--text-muted)" }}>
-                        Rica v0.1.0 · Open Source
+                        Rica v{versionInfo?.current || "0.1.0"} · Open Source
                     </p>
+                    {versionInfo?.update_available && (
+                        <div className="mt-2 text-center">
+                            <span className="text-xs px-2 py-1 rounded" style={{ backgroundColor: 'var(--brand-glow)', color: 'var(--brand-primary)', border: '1px solid var(--brand-primary)' }}>
+                                ✨ v{versionInfo.latest} Available
+                            </span>
+                            <p className="text-[10px] mt-1 text-center" style={{ color: "var(--text-muted)" }}>Run <code className="px-1 bg-black/20 rounded">rica update</code></p>
+                        </div>
+                    )}
                 </div>
             </aside>
 

@@ -45,6 +45,34 @@ async def root():
 async def health():
     return {"status": "ok", "mode": "local"}
 
+@app.get("/api/v1/version")
+async def get_version():
+    """Return current Rica version and check for latest on GitHub."""
+    import httpx
+    try:
+        from cli.main import VERSION
+    except ImportError:
+        VERSION = "0.1.0"
+        
+    latest_version = VERSION
+    try:
+        url = "https://raw.githubusercontent.com/nexurlabs/rica/main/pyproject.toml"
+        async with httpx.AsyncClient(timeout=3.0) as client:
+            resp = await client.get(url)
+            if resp.status_code == 200:
+                import re
+                match = re.search(r'version\s*=\s*"([^"]+)"', resp.text)
+                if match:
+                    latest_version = match.group(1)
+    except Exception:
+        pass
+
+    return {
+        "current": VERSION,
+        "latest": latest_version,
+        "update_available": latest_version != VERSION
+    }
+
 
 # Import and register routes
 from routes.auth import router as auth_router

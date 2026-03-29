@@ -60,6 +60,9 @@ class ApiClient {
     async getUsage() { return this.request(`/stats/${LOCAL_SERVER_ID}/usage`); }
     async getErrors(limit = 50) { return this.request(`/stats/${LOCAL_SERVER_ID}/errors?limit=${limit}`); }
     async clearErrors() { return this.request(`/stats/${LOCAL_SERVER_ID}/errors`, { method: 'DELETE' }); }
+
+    // System
+    async getVersion() { return this.request(`/version`); }
 }
 
 export const api = new ApiClient();
