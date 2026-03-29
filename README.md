@@ -32,6 +32,14 @@ source .venv/bin/activate   # Windows: .\.venv\Scripts\Activate.ps1
 rica start
 ```
 
+### What the installer does
+1. checks for Git, Python, and Node.js
+2. clones or updates Rica into a default folder
+3. creates a Python virtual environment
+4. installs backend dependencies
+5. installs dashboard web dependencies
+6. starts onboarding automatically
+
 ---
 
 ## Features
@@ -51,6 +59,7 @@ rica start
 ## Requirements
 
 - Python 3.11+
+- Node.js 20+
 - A Discord bot token ([create one here](https://discord.com/developers/applications))
 - An API key from at least one AI provider
 
@@ -112,6 +121,21 @@ All data is stored locally on your machine:
 ```
 
 ---
+
+## Troubleshooting
+
+### Windows
+- Run the PowerShell command in a **normal PowerShell window**, not CMD.
+- If `winget` is missing, install **App Installer** from the Microsoft Store first.
+- If script execution is blocked, run:
+  ```powershell
+  Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+  ```
+- If `py` is missing after install, close and reopen PowerShell.
+
+### Linux / macOS
+- If Python virtualenv creation fails, install your system's `python3-venv` / Python venv package and rerun the installer.
+- If `npm` is too old, install a newer Node.js LTS release and rerun.
 
 ## Contributing
 

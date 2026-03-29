@@ -6,8 +6,8 @@ DEFAULT_DIR="${HOME}/.nexurlabs/rica"
 INSTALL_DIR="${RICA_DIR:-$DEFAULT_DIR}"
 
 have() { command -v "$1" >/dev/null 2>&1; }
-log() { printf '\n==> %s\n' "$1"; }
-warn() { printf '\n[warn] %s\n' "$1"; }
+log() { printf '\n==> %s\n' "$1" >&2; }
+warn() { printf '\n[warn] %s\n' "$1" >&2; }
 
 ensure_sudo() {
   if have sudo; then
@@ -96,10 +96,10 @@ resolve_repo_dir() {
   mkdir -p "$(dirname "$INSTALL_DIR")"
   if [[ -d "$INSTALL_DIR/.git" ]]; then
     log "Updating existing Rica checkout at $INSTALL_DIR"
-    git -C "$INSTALL_DIR" pull --ff-only
+    git -C "$INSTALL_DIR" pull --ff-only >&2
   else
     log "Cloning Rica into $INSTALL_DIR"
-    git clone "$REPO_URL" "$INSTALL_DIR"
+    git clone "$REPO_URL" "$INSTALL_DIR" >&2
   fi
   printf '%s\n' "$INSTALL_DIR"
 }
