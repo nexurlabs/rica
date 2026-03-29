@@ -84,11 +84,11 @@ Write-Step 'Launching Rica onboarding'
 
 $startNow = Read-Host "Start Rica now? [Y/n]"
 if ([string]::IsNullOrWhiteSpace($startNow) -or $startNow -match '^[Yy]$') {
-  Write-Host "`n==> Starting Rica and the dashboard frontend..." -ForegroundColor Yellow
+  Write-Host "`n==> Starting Rica and the dashboard frontend in background mode..." -ForegroundColor Yellow
   Write-Host "==> API: http://localhost:8000" -ForegroundColor Yellow
   Write-Host "==> Dashboard UI: http://localhost:3000`n" -ForegroundColor Yellow
-  Write-Step 'Starting Rica + dashboard frontend'
-  & $ricaExe start --with-frontend
+  Write-Step 'Starting Rica + dashboard frontend (daemon)'
+  & $ricaExe start --with-frontend -d
   exit $LASTEXITCODE
 }
 

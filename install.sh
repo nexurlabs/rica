@@ -135,11 +135,11 @@ main() {
   printf '\nRica onboarding finished.\n'
   read -r -p 'Start Rica now? [Y/n] ' start_now
   if [[ -z "${start_now}" || "${start_now}" =~ ^[Yy]$ ]]; then
-    printf '\n==> Starting Rica and the dashboard frontend...\n' >&2
+    printf '\n==> Starting Rica and the dashboard frontend in background mode...\n' >&2
     printf '==> API: http://localhost:8000\n' >&2
     printf '==> Dashboard UI: http://localhost:3000\n\n' >&2
-    log "Starting Rica + dashboard frontend"
-    exec rica start --with-frontend
+    log "Starting Rica + dashboard frontend (daemon)"
+    exec rica start --with-frontend -d
   fi
 
   printf '\nRica is installed. Rica commands:\n'
