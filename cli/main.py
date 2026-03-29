@@ -296,6 +296,13 @@ def update():
         console.print("  [dim]Updating dependencies...[/dim]")
         pip_cmd = sys.executable
         subprocess.run(
+            [pip_cmd, "-m", "pip", "install", "-e", ".[dev]"],
+            cwd=str(install_dir),
+            check=True,
+            capture_output=True,
+            text=True
+        )
+        subprocess.run(
             [pip_cmd, "-m", "pip", "install", "-r", "bot/requirements.txt", "-r", "dashboard/api/requirements.txt"],
             cwd=str(install_dir),
             check=True,
