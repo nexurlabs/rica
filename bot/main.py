@@ -300,7 +300,8 @@ async def on_ready():
     except Exception as e:
         print(f"[Rica] Could not restore sessions: {e}")
 
-    session_cleanup.start()
+    if not session_cleanup.is_running():
+        session_cleanup.start()
 
 
 @client.event

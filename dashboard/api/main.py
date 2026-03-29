@@ -52,7 +52,7 @@ async def get_version():
     try:
         from cli.main import VERSION
     except ImportError:
-        VERSION = "0.1.0"
+        VERSION = "0.1.1"
         
     latest_version = VERSION
     try:

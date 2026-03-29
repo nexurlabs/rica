@@ -9,7 +9,7 @@ import httpx
 from pathlib import Path
 
 # Rica version
-VERSION = "0.1.0"
+VERSION = "0.1.1"
 
 # Add bot/ to path so storage/providers/etc. are importable
 _bot_path = os.path.join(os.path.dirname(__file__), "..", "bot")
@@ -264,6 +264,28 @@ def doctor():
         console.print("  ✅ Database found")
     else:
         console.print("  ⚠️  Database not initialized (will be created on first run)")
+
+    # Docker (for Agent code execution)
+    docker_ok = False
+    try:
+        result = subprocess.run(
+            ["docker", "info"],
+            capture_output=True,
+            text=True,
+            timeout=8,
+        )
+        if result.returncode == 0:
+            docker_ok = True
+            console.print("  ✅ Docker daemon reachable")
+        else:
+            console.print("  ⚠️  Docker installed but daemon not reachable")
+            issues += 1
+    except FileNotFoundError:
+        console.print("  ⚠️  Docker not installed — Agent code execution will not work")
+        issues += 1
+    except subprocess.TimeoutExpired:
+        console.print("  ⚠️  Docker check timed out — is Docker running?")
+        issues += 1
 
     console.print(f"\n  {'⚠️' if issues else '✅'} {issues} issue(s) found.\n")
 

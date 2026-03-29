@@ -142,9 +142,15 @@ class AgentWorker:
                 filename = file_data.get("name", "output.bin")
                 data = file_data.get("data")
                 if data:
-                    await message.channel.send(
-                        file=discord.File(io.BytesIO(data), filename=filename)
-                    )
+                    try:
+                        await message.channel.send(
+                            file=discord.File(io.BytesIO(data), filename=filename)
+                        )
+                    except discord.Forbidden:
+                        await message.channel.send(
+                            f"⚠️ I generated `{filename}`, but I don't have permission to attach files in this channel."
+                        )
+                        break
 
             return output or "Code executed successfully."
 

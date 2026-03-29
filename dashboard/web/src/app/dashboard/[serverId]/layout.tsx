@@ -77,7 +77,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
                 <div className="mt-4 pt-4" style={{ borderTop: "1px solid var(--border)" }}>
                     <p className="text-xs text-center" style={{ color: "var(--text-muted)" }}>
-                        Rica v{versionInfo?.current || "0.1.0"} · Open Source
+                        Rica v{versionInfo?.current || "0.1.1"} · Open Source
                     </p>
                     {versionInfo?.update_available && (
                         <div className="mt-2 text-center">
