@@ -56,11 +56,13 @@ Write-Step 'Installing Rica backend dependencies'
 & $pythonExe -m pip install -e '.[dev]'
 & $pythonExe -m pip install -r bot/requirements.txt -r dashboard/api/requirements.txt
 
-Write-Step 'Installing Rica dashboard web dependencies'
+Write-Step 'Installing Rica dashboard web dependencies (this can take a minute)'
 Push-Location (Join-Path $RepoDir 'dashboard\web')
-npm install | Out-Host
+npm install --no-fund --no-audit --loglevel=error | Out-Host
 Pop-Location
 
+Write-Host "`n==> Web dependencies installed. Next: onboarding will open interactively." -ForegroundColor Yellow
+Write-Host "==> If the terminal looks idle for a moment, wait — the prompt is loading.`n" -ForegroundColor Yellow
 Write-Step 'Launching Rica onboarding'
 & $ricaExe onboard
 
@@ -68,10 +70,16 @@ $startNow = Read-Host "Start Rica now? [Y/n]"
 if ([string]::IsNullOrWhiteSpace($startNow) -or $startNow -match '^[Yy]$') {
   $startFrontend = Read-Host "Also start the dashboard frontend on http://localhost:3000? [Y/n]"
   if ([string]::IsNullOrWhiteSpace($startFrontend) -or $startFrontend -match '^[Yy]$') {
+    Write-Host "`n==> Starting Rica and the dashboard frontend..." -ForegroundColor Yellow
+    Write-Host "==> API: http://localhost:8000" -ForegroundColor Yellow
+    Write-Host "==> Dashboard UI: http://localhost:3000`n" -ForegroundColor Yellow
     Write-Step 'Starting Rica + dashboard frontend'
     & $ricaExe start --with-frontend
     exit $LASTEXITCODE
   }
+  Write-Host "`n==> Starting Rica..." -ForegroundColor Yellow
+  Write-Host "==> API: http://localhost:8000" -ForegroundColor Yellow
+  Write-Host "==> Dashboard UI: http://localhost:3000 (start frontend separately if needed)`n" -ForegroundColor Yellow
   Write-Step 'Starting Rica'
   & $ricaExe start
   exit $LASTEXITCODE

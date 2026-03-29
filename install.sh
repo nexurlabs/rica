@@ -124,9 +124,11 @@ main() {
   pip install -e '.[dev]'
   pip install -r bot/requirements.txt -r dashboard/api/requirements.txt
 
-  log "Installing Rica dashboard web dependencies"
-  (cd dashboard/web && npm install)
+  log "Installing Rica dashboard web dependencies (this can take a minute)"
+  (cd dashboard/web && npm install --no-fund --no-audit --loglevel=error)
 
+  printf '\n==> Web dependencies installed. Next: onboarding will open interactively.\n' >&2
+  printf '==> If the terminal looks idle for a moment, wait — the prompt is loading.\n\n' >&2
   log "Launching Rica onboarding"
   rica onboard
 
@@ -135,9 +137,15 @@ main() {
   if [[ -z "${start_now}" || "${start_now}" =~ ^[Yy]$ ]]; then
     read -r -p 'Also start the dashboard frontend on http://localhost:3000? [Y/n] ' start_frontend
     if [[ -z "${start_frontend}" || "${start_frontend}" =~ ^[Yy]$ ]]; then
+      printf '\n==> Starting Rica and the dashboard frontend...\n' >&2
+      printf '==> API: http://localhost:8000\n' >&2
+      printf '==> Dashboard UI: http://localhost:3000\n\n' >&2
       log "Starting Rica + dashboard frontend"
       exec rica start --with-frontend
     fi
+    printf '\n==> Starting Rica...\n' >&2
+    printf '==> API: http://localhost:8000\n' >&2
+    printf '==> Dashboard UI: http://localhost:3000 (start frontend separately if needed)\n\n' >&2
     log "Starting Rica"
     exec rica start
   fi
