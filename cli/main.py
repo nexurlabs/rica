@@ -273,18 +273,20 @@ def update():
     """Update Rica to the latest version."""
     from rich.console import Console
     console = Console()
-    
+
     install_dir = Path(__file__).resolve().parent.parent
     if not (install_dir / ".git").exists():
         console.print("❌ Rica does not appear to be a git repository. Cannot auto-update.")
         return
 
+    before_version = VERSION
+
     console.print("\n[bold]Updating Rica...[/bold]\n")
     try:
         console.print("  [dim]Pulling latest changes...[/dim]")
         subprocess.run(
-            ["git", "pull", "--ff-only"], 
-            cwd=str(install_dir), 
+            ["git", "pull", "--ff-only"],
+            cwd=str(install_dir),
             check=True,
             capture_output=True,
             text=True
@@ -300,7 +302,7 @@ def update():
             capture_output=True,
             text=True
         )
-        
+
         web_dir = install_dir / "dashboard" / "web"
         if web_dir.exists():
             console.print("  [dim]Updating web dependencies...[/dim]")
@@ -312,8 +314,21 @@ def update():
                 capture_output=True,
                 text=True
             )
-        
-        console.print("\n  🎉 [bold green]Rica updated successfully![/bold green]\n")
+
+        after_version = before_version
+        try:
+            pyproject_text = (install_dir / "pyproject.toml").read_text(encoding="utf-8")
+            import re
+            match = re.search(r'version\s*=\s*"([^"]+)"', pyproject_text)
+            if match:
+                after_version = match.group(1)
+        except Exception:
+            pass
+
+        if after_version != before_version:
+            console.print(f"\n  🎉 [bold green]Rica updated successfully![/bold green] [dim](v{before_version} → v{after_version})[/dim]\n")
+        else:
+            console.print(f"\n  🎉 [bold green]Rica updated successfully![/bold green] [dim](still on v{after_version})[/dim]\n")
     except subprocess.CalledProcessError as e:
         console.print(f"\n  ❌ [bold red]Update failed![/bold red]")
         if e.stderr:
