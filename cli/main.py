@@ -19,6 +19,8 @@ if _bot_path not in sys.path:
 
 RICA_HOME = Path(os.environ.get("RICA_HOME", Path.home() / ".rica"))
 CONFIG_PATH = RICA_HOME / "config.yaml"
+PID_PATH = RICA_HOME / "rica.pid"
+LOG_PATH = RICA_HOME / "rica.log"
 
 
 def _check_for_updates():
@@ -34,6 +36,39 @@ def _check_for_updates():
                 if latest_version != VERSION:
                     click.echo(f"✨ [Update Available] You are running v{VERSION}, but v{latest_version} is out!")
                     click.echo("   Run 'rica update' to upgrade.\n")
+    except Exception:
+        pass
+
+
+def _read_pid() -> int | None:
+    try:
+        if PID_PATH.exists():
+            return int(PID_PATH.read_text().strip())
+    except Exception:
+        return None
+    return None
+
+
+def _write_pid(pid: int) -> None:
+    RICA_HOME.mkdir(parents=True, exist_ok=True)
+    PID_PATH.write_text(str(pid))
+
+
+def _is_running(pid: int | None) -> bool:
+    if not pid:
+        return False
+    try:
+        import psutil
+        p = psutil.Process(pid)
+        return p.is_running() and p.status() != "zombie"
+    except Exception:
+        return False
+
+
+def _clear_pid() -> None:
+    try:
+        if PID_PATH.exists():
+            PID_PATH.unlink()
     except Exception:
         pass
 
@@ -158,6 +193,12 @@ def status():
 
     trigger = config.get("trigger_word", "Rica")
     table.add_row("Trigger Word", trigger)
+
+    pid = _read_pid()
+    if _is_running(pid):
+        table.add_row("Runtime", f"🟢 Running (PID {pid})")
+    else:
+        table.add_row("Runtime", "🔴 Stopped")
 
     console.print(table)
 
@@ -286,45 +327,64 @@ def stop():
     from rich.console import Console
     import psutil
     console = Console()
-    
+
     console.print("\n[bold]Stopping Rica processes...[/bold]\n")
-    
+
     killed = 0
+
+    # 1) Primary stop path: PID file from daemon mode
+    pid = _read_pid()
+    if _is_running(pid):
+        try:
+            proc = psutil.Process(pid)
+            proc.terminate()
+            proc.wait(timeout=5)
+            killed += 1
+            console.print(f"  🛑 Stopped Rica daemon PID {pid}")
+        except Exception:
+            try:
+                psutil.Process(pid).kill()
+                killed += 1
+                console.print(f"  🛑 Force-killed Rica daemon PID {pid}")
+            except Exception:
+                pass
+
+    # 2) Fallback scan for orphaned processes
     current_pid = os.getpid()
-    
     for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
         try:
-            # Skip ourselves
             if proc.info['pid'] == current_pid:
                 continue
-                
+
             cmdline = proc.info.get('cmdline') or []
             cmd_str = ' '.join(cmdline).lower()
-            
-            is_rica = 'rica start' in cmd_str
-            is_next = 'next dev' in cmd_str and 'dashboard' in cmd_str
-            
+
+            is_rica = (' -m cli.main start' in cmd_str) or ('rica.exe' in cmd_str and ' start' in cmd_str)
+            is_next = ('next' in cmd_str and 'dev' in cmd_str and 'dashboard' in cmd_str)
+
             if is_rica or is_next:
                 proc.terminate()
                 killed += 1
                 console.print(f"  🛑 Stopped process {proc.info['pid']} ({proc.info['name']})")
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             pass
-            
+
     if killed > 0:
+        _clear_pid()
         console.print(f"\n  ✅ Stopped {killed} processes.\n")
     else:
+        _clear_pid()
         console.print("  ℹ️  No running Rica processes found.\n")
 
 
 @main.command()
 def logs():
     """Tail the Rica background logs."""
-    log_file = RICA_HOME / "rica.log"
+    log_file = LOG_PATH
     if not log_file.exists():
         click.echo("No logs found. Is Rica running?")
         return
-        
+
     click.echo(f"Tailing {log_file} (Ctrl+C to exit)...\n")
     
     # Simple tail -f equivalent
@@ -340,45 +400,65 @@ def logs():
 def _start_daemon(no_dashboard: bool, with_frontend: bool):
     """Spawn Rica in the background and redirect output to a log file."""
     import sys
+    import time
     from rich.console import Console
     console = Console()
-    
-    log_file = RICA_HOME / "rica.log"
-    
+
+    RICA_HOME.mkdir(parents=True, exist_ok=True)
+    log_file = LOG_PATH
+
+    # Avoid duplicate daemons
+    existing_pid = _read_pid()
+    if _is_running(existing_pid):
+        console.print(f"\n  ℹ️ Rica is already running (PID {existing_pid}).")
+        console.print("  💻 Run [bold cyan]rica logs[/bold cyan] to view logs.")
+        console.print("  🛑 Run [bold red]rica stop[/bold red] to stop it.\n")
+        return
+
     cmd = [sys.executable, "-m", "cli.main", "start"]
     if no_dashboard:
         cmd.append("--no-dashboard")
     if with_frontend:
         cmd.append("--with-frontend")
-        
+
     console.print("\n[bold]Starting Rica in the background...[/bold]")
-    
+
     try:
         with open(log_file, "a") as f:
             if os.name == 'nt':
-                # Windows hidden process
                 CREATE_NO_WINDOW = 0x08000000
-                subprocess.Popen(
+                proc = subprocess.Popen(
                     cmd,
                     stdout=f,
                     stderr=subprocess.STDOUT,
                     creationflags=CREATE_NO_WINDOW
                 )
             else:
-                # Unix daemon
-                subprocess.Popen(
+                proc = subprocess.Popen(
                     cmd,
                     stdout=f,
                     stderr=subprocess.STDOUT,
                     start_new_session=True
                 )
-                
+
+        _write_pid(proc.pid)
+
+        # Give it a moment to crash early if config/env is broken
+        time.sleep(1.0)
+        if proc.poll() is not None:
+            _clear_pid()
+            console.print("  ❌ Rica failed to stay running in background.")
+            console.print(f"  📝 Check logs: {log_file}")
+            return
+
         console.print("  ✅ Rica is running in the background!")
+        console.print(f"  🧾 PID: {proc.pid}")
         console.print(f"  📝 Logs are writing to: {log_file}")
         console.print("  💻 Run [bold cyan]rica logs[/bold cyan] to view them.")
         console.print("  🛑 Run [bold red]rica stop[/bold red] to shut it down.\n")
-        
+
     except Exception as e:
+        _clear_pid()
         console.print(f"  ❌ Failed to start background process: {e}")
 
 
