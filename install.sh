@@ -135,25 +135,17 @@ main() {
   printf '\nRica onboarding finished.\n'
   read -r -p 'Start Rica now? [Y/n] ' start_now
   if [[ -z "${start_now}" || "${start_now}" =~ ^[Yy]$ ]]; then
-    read -r -p 'Also start the dashboard frontend on http://localhost:3000? [Y/n] ' start_frontend
-    if [[ -z "${start_frontend}" || "${start_frontend}" =~ ^[Yy]$ ]]; then
-      printf '\n==> Starting Rica and the dashboard frontend...\n' >&2
-      printf '==> API: http://localhost:8000\n' >&2
-      printf '==> Dashboard UI: http://localhost:3000\n\n' >&2
-      log "Starting Rica + dashboard frontend"
-      exec rica start --with-frontend
-    fi
-    printf '\n==> Starting Rica...\n' >&2
+    printf '\n==> Starting Rica and the dashboard frontend...\n' >&2
     printf '==> API: http://localhost:8000\n' >&2
-    printf '==> Dashboard UI: http://localhost:3000 (start frontend separately if needed)\n\n' >&2
-    log "Starting Rica"
-    exec rica start
+    printf '==> Dashboard UI: http://localhost:3000\n\n' >&2
+    log "Starting Rica + dashboard frontend"
+    exec rica start --with-frontend
   fi
 
-  printf '\nRica is installed. Next steps:\n'
-  printf '  source %s/.venv/bin/activate\n' "$repo_dir"
-  printf '  cd %s\n' "$repo_dir"
-  printf '  rica start\n\n'
+  printf '\nRica is installed. Rica commands:\n'
+  printf '  rica start --with-frontend\n'
+  printf '  rica stop\n'
+  printf '  rica update\n\n'
 }
 
 main "$@"

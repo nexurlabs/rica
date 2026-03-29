@@ -75,24 +75,15 @@ Write-Step 'Launching Rica onboarding'
 
 $startNow = Read-Host "Start Rica now? [Y/n]"
 if ([string]::IsNullOrWhiteSpace($startNow) -or $startNow -match '^[Yy]$') {
-  $startFrontend = Read-Host "Also start the dashboard frontend on http://localhost:3000? [Y/n]"
-  if ([string]::IsNullOrWhiteSpace($startFrontend) -or $startFrontend -match '^[Yy]$') {
-    Write-Host "`n==> Starting Rica and the dashboard frontend..." -ForegroundColor Yellow
-    Write-Host "==> API: http://localhost:8000" -ForegroundColor Yellow
-    Write-Host "==> Dashboard UI: http://localhost:3000`n" -ForegroundColor Yellow
-    Write-Step 'Starting Rica + dashboard frontend'
-    & $ricaExe start --with-frontend
-    exit $LASTEXITCODE
-  }
-  Write-Host "`n==> Starting Rica..." -ForegroundColor Yellow
+  Write-Host "`n==> Starting Rica and the dashboard frontend..." -ForegroundColor Yellow
   Write-Host "==> API: http://localhost:8000" -ForegroundColor Yellow
-  Write-Host "==> Dashboard UI: http://localhost:3000 (start frontend separately if needed)`n" -ForegroundColor Yellow
-  Write-Step 'Starting Rica'
-  & $ricaExe start
+  Write-Host "==> Dashboard UI: http://localhost:3000`n" -ForegroundColor Yellow
+  Write-Step 'Starting Rica + dashboard frontend'
+  & $ricaExe start --with-frontend
   exit $LASTEXITCODE
 }
 
-Write-Host "`nRica is installed. Next steps:" -ForegroundColor Green
-Write-Host "  cd $RepoDir"
-Write-Host "  .\.venv\Scripts\Activate.ps1"
-Write-Host "  rica start`n"
+Write-Host "`nRica is installed. Rica commands:" -ForegroundColor Green
+Write-Host "  rica start --with-frontend"
+Write-Host "  rica stop"
+Write-Host "  rica update`n"
