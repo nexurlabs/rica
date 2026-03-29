@@ -267,8 +267,9 @@ def _start_dashboard_frontend():
         return
 
     try:
+        npm_cmd = "npm.cmd" if os.name == "nt" else "npm"
         subprocess.Popen(
-            ["npm", "run", "dev"],
+            [npm_cmd, "run", "dev"],
             cwd=str(web_dir),
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
