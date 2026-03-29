@@ -1,10 +1,7 @@
 # Discord
 discord.py>=2.3.0
 
-# Google Cloud
-google-cloud-firestore>=2.16.0
-google-cloud-storage>=2.14.0
-google-cloud-secret-manager>=2.18.0
+# Google AI SDK (used for Gemini + creative tools)
 google-genai>=1.0.0
 
 # AI Providers
