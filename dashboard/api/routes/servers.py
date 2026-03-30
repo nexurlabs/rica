@@ -173,7 +173,9 @@ async def setup_wizard(server_id: str, setup: SetupWizardRequest, request: Reque
     firestore_client.update_server_config(server_id, updates)
     gcs_client.init_server_storage(server_id)
 
-    return {"message": "Setup complete!", "server_id": server_id}
+    _trigger_restart()
+
+    return {"message": "Setup complete! Bot is restarting.", "server_id": server_id}
 
 
 @router.patch("/{server_id}/config")
@@ -325,3 +327,12 @@ def _check_access(server_id: str, user_id: str | None = None) -> dict:
         # Auto-create config for this server
         config = firestore_client.create_server_config(server_id)
     return config
+
+def _trigger_restart():
+    """Restarts the Rica bot process to apply configuration changes."""
+    import subprocess
+    import sys
+    import os
+    # Detached python process that waits 1s, stops the daemon, and starts it again
+    cmd = f'{sys.executable} -c "import time, os; time.sleep(1); os.system(\'{sys.executable} -m cli.main stop\'); os.system(\'{sys.executable} -m cli.main start -d\')"'
+    subprocess.Popen(cmd, shell=True, start_new_session=True if os.name != 'nt' else False)
