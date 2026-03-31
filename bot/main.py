@@ -4,6 +4,7 @@
 
 import os
 import asyncio
+import datetime
 import discord
 from discord.ext import tasks
 from config import DISCORD_BOT_TOKEN
@@ -208,7 +209,7 @@ async def execute_moderation(message: discord.Message, action: dict):
         elif action_type == "mute":
             if message.guild and message.author:
                 await message.author.timeout(
-                    discord.utils.utcnow() + discord.timedelta(seconds=duration),
+                    discord.utils.utcnow() + datetime.timedelta(seconds=duration),
                     reason=reason
                 )
                 await message.channel.send(

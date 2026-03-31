@@ -11,7 +11,11 @@ from pathlib import Path
 # Rica version
 VERSION = "0.1.2"
 
-# Add bot/ to path so storage/providers/etc. are importable
+# Add bot/ to path so storage/providers/etc. are importable.
+# NOTE: This is a workaround because bot/ isn't a proper Python package yet.
+# Ideally, bot/ would be a namespace package in pyproject.toml, but changing
+# this would break backward compatibility with the current import structure.
+# TODO: Refactor to proper package structure in a future release.
 _bot_path = os.path.join(os.path.dirname(__file__), "..", "bot")
 _bot_path = os.path.abspath(_bot_path)
 if _bot_path not in sys.path:
@@ -319,13 +323,6 @@ def update():
         pip_cmd = sys.executable
         subprocess.run(
             [pip_cmd, "-m", "pip", "install", "-e", ".[dev]"],
-            cwd=str(install_dir),
-            check=True,
-            capture_output=True,
-            text=True
-        )
-        subprocess.run(
-            [pip_cmd, "-m", "pip", "install", "-r", "bot/requirements.txt", "-r", "dashboard/api/requirements.txt"],
             cwd=str(install_dir),
             check=True,
             capture_output=True,

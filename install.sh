@@ -122,7 +122,6 @@ main() {
 
   log "Installing Rica backend dependencies"
   pip install -e '.[dev]'
-  pip install -r bot/requirements.txt -r dashboard/api/requirements.txt
 
   log "Installing Rica dashboard web dependencies (this can take a minute)"
   (cd dashboard/web && npm install --no-fund --no-audit --loglevel=error)

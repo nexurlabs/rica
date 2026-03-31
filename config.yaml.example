@@ -1,6 +1,11 @@
 # Rica Configuration Example
 # Copy this to ~/.rica/config.yaml after running 'rica onboard'
 # OR let 'rica onboard' generate it for you automatically.
+#
+# ⚠️  SECURITY NOTE: API keys in this file are stored in PLAINTEXT.
+#     The recommended way to manage keys is through the Rica dashboard
+#     at http://localhost:3000, which encrypts keys at rest.
+#     If you edit this file directly, ensure proper file permissions.
 
 discord:
   token: "YOUR_DISCORD_BOT_TOKEN_HERE"

@@ -15,6 +15,8 @@ function Ensure-Command($Command, $WingetId) {
   }
   Write-Step "Installing $Command via winget"
   winget install --accept-source-agreements --accept-package-agreements --id $WingetId
+  # Refresh PATH so the newly installed command is available immediately
+  $env:Path = [Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' + [Environment]::GetEnvironmentVariable('Path', 'User')
 }
 
 function Get-RepoDir {
@@ -70,7 +72,6 @@ Write-Step 'Upgrading pip'
 
 Write-Step 'Installing Rica backend dependencies'
 & $pythonExe -m pip install -e '.[dev]'
-& $pythonExe -m pip install -r bot/requirements.txt -r dashboard/api/requirements.txt
 
 Write-Step 'Installing Rica dashboard web dependencies (this can take a minute)'
 Push-Location (Join-Path $RepoDir 'dashboard\web')

@@ -13,7 +13,8 @@ from rich.panel import Panel
 from rich.prompt import Prompt, Confirm
 from rich.table import Table
 
-# Add bot/ to path for provider imports
+# Add bot/ to path for provider imports.
+# See cli/main.py for explanation of this workaround.
 _bot_path = os.path.join(os.path.dirname(__file__), "..", "bot")
 _bot_path = os.path.abspath(_bot_path)
 if _bot_path not in sys.path:

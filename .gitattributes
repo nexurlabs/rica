@@ -1,0 +1,14 @@
+# Auto-detect text files and normalise line endings
+* text=auto
+
+# Force LF for shell scripts (required for Linux/macOS)
+*.sh text eol=lf
+
+# Force CRLF for PowerShell scripts (Windows convention)
+*.ps1 text eol=crlf
+
+# Mark binaries
+*.png binary
+*.jpg binary
+*.zip binary
+*.db binary
