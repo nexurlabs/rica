@@ -1,152 +1,71 @@
-# Rica — Open-Source AI Assistant for Discord
+# Rica — AI Discord Assistant
 
-> Self-hosted, BYOK (Bring Your Own Key), multi-provider AI bot for Discord communities.
+<p align="center">
+  <img src="https://nexurlabs.com/logo.png" width="80" alt="Rica Logo" />
+</p>
 
-Rica is a **fully self-hosted** AI assistant for Discord that you run on your own machine. Bring your own API keys, choose your AI provider, and manage everything through a local web dashboard — no cloud dependency, no subscription, your data stays on your system.
+> The ultimate self-hosted AI Discord assistant. Zero telemetry, Bring Your Own Key (BYOK).
 
-Originally built by [NexurLabs](https://nexurlabs.com).
+Rica is a production-ready Discord bot powered by LLMs, featuring a 4-worker pipeline (Responder, Moderator, DB Manager, Agent), an embedded web dashboard, and a simple CLI setup.
 
 ---
 
-## Quick Start
+## ✨ Features
 
-### macOS / Linux
+- **🤖 Smart AI Responses** — LLM-powered replies that understand context, intent, and conversation flow
+- **🛡️ Auto Moderation** — Keyword filtering, spam detection, and automated moderation actions
+- **📊 Embedded Dashboard** — Live web UI for monitoring, config, and analytics
+- **🔗 Webhook Integration** — Connect external services and trigger bot actions via webhooks
+- **💬 Multi-Server Support** — Handles multiple Discord servers from a single instance
+- **🔒 Self-Hosted** — Zero telemetry, your server, your data, your control
+
+---
+
+## 🏗️ Architecture
+
+Rica uses a **4-worker pipeline**:
+
+```
+User Message
+    │
+    ├── Responder    → crafts and sends AI responses
+    ├── Moderator    → checks message safety, runs moderation filters
+    ├── DB Manager   → logs conversations, handles history
+    └── Agent        → handles commands, external API calls
+```
+
+Powered by **Python + SQLite** — lightweight enough to run on a $5 VPS.
+
+---
+
+## 🚀 Quick Start
+
 ```bash
-curl -fsSL https://raw.githubusercontent.com/nexurlabs/rica/main/install.sh | bash
-```
+# Clone the repo
+git clone https://github.com/nexurlabs/rica.git
+cd rica
 
-### Windows (PowerShell)
-```powershell
-powershell -c "irm https://raw.githubusercontent.com/nexurlabs/rica/main/install.ps1 | iex"
-```
+# Run the installer
+bash run.sh
 
-These installers will:
-- clone or update the repo automatically
-- install Python + web dependencies
-- prepare the environment
-- launch onboarding automatically
-- offer to start Rica immediately after onboarding
-- optionally start the dashboard frontend too
-
-### Manual start after install
-```bash
-source .venv/bin/activate   # Windows: .\.venv\Scripts\Activate.ps1
-rica start
-```
-
-### What the installer does
-1. checks for Git, Python, and Node.js
-2. clones or updates Rica into a default folder
-3. creates a Python virtual environment
-4. installs backend dependencies
-5. installs dashboard web dependencies
-6. starts onboarding automatically
-7. asks if you want to start Rica immediately
-8. optionally starts the dashboard frontend on `localhost:3000`
-
----
-
-## Features
-
-- **BYOK (Bring Your Own Key)** — use your own API keys from Google AI, OpenAI, Anthropic, OpenRouter, or Groq
-- **4-Worker AI Pipeline** — Responder, Moderator, DB Manager, and Agent workers
-- **Local Dashboard** — full web UI at `localhost:3000` for configuration, key management, and stats
-- **Creative Tools** — Google Imagen, Lyria, and Veo integration for media generation
-- **Sandboxed Code Execution** — Agent worker can execute Python code safely
-- **Encrypted Key Storage** — API keys encrypted at rest with Fernet
-- **Session Management** — intelligent conversation context with auto-cleanup
-- **Rate Limiting** — built-in per-user rate limiting
-- **100% Local** — all data stored on your machine, no cloud services required
-
----
-
-## Requirements
-
-- Python 3.11+
-- Node.js 20+
-- A Discord bot token ([create one here](https://discord.com/developers/applications))
-- An API key from at least one AI provider
-
----
-
-## CLI Commands
-
-| Command | Description |
-|---------|-------------|
-| `rica onboard` | Interactive setup wizard |
-| `rica start` | Start the bot and dashboard API |
-| `rica dashboard` | Open the dashboard in your browser |
-| `rica status` | Show current configuration summary |
-| `rica doctor` | Diagnose common issues |
-
----
-
-## Architecture
-
-```
-rica/
-├── cli/              ← CLI entry point + onboarding wizard
-├── bot/              ← Discord bot runtime
-│   ├── workers/      ← AI pipeline (responder, moderator, db_manager, agent)
-│   ├── providers/    ← AI provider adapters (Google, OpenAI, Anthropic, etc.)
-│   ├── creative/     ← Media generation (Imagen, Lyria, Veo)
-│   └── storage/      ← Local storage (SQLite + files)
-├── dashboard/
-│   ├── api/          ← FastAPI dashboard backend
-│   └── web/          ← Next.js dashboard frontend
-└── pyproject.toml
+# Follow the prompts — that's it!
 ```
 
 ---
 
-## Supported AI Providers
+## 📖 Sections
 
-| Provider | Models |
-|----------|--------|
-| Google AI | Gemini 2.5 Pro, Gemini 2.5 Flash, etc. |
-| OpenAI | GPT-4o, GPT-4.1, etc. |
-| Anthropic | Claude 4 Sonnet, Claude 3.5 Haiku, etc. |
-| OpenRouter | Any model on OpenRouter |
-| Groq | Llama, Mixtral, etc. |
-
----
-
-## Data Storage
-
-All data is stored locally on your machine:
-
-```
-~/.rica/
-├── config.yaml       ← Bot configuration
-├── rica.db           ← SQLite database (usage stats, errors, sessions)
-├── secret.key        ← Encryption key for API keys
-├── files/            ← Data browser files
-└── logs/             ← Bot logs (markdown)
-```
+- [Getting Started](getting-started) — What to expect and what you'll need
+- [Installation](installation) — Step-by-step install guide
+- [Configuration](configuration) — All config options explained
+- [Commands](commands) — Bot commands and how to use them
+- [Dashboard](dashboard) — Using the built-in web dashboard
+- [Deployment](deployment) — Deploy on your own server or cloud
+- [Troubleshooting](troubleshooting) — Common issues and fixes
 
 ---
 
-## Troubleshooting
-
-### Windows
-- Run the PowerShell command in a **normal PowerShell window**, not CMD.
-- If `winget` is missing, install **App Installer** from the Microsoft Store first.
-- If script execution is blocked, run:
-  ```powershell
-  Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
-  ```
-- If `py` is missing after install, close and reopen PowerShell.
-
-### Linux / macOS
-- If Python virtualenv creation fails, install your system's `python3-venv` / Python venv package and rerun the installer.
-- If `npm` is too old, install a newer Node.js LTS release and rerun.
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
----
-
-## License
-
-[MIT](LICENSE) — built by [NexurLabs](https://nexurlabs.com).
+<p align="center">
+  <strong>Built with 💜 by <a href="https://nexurlabs.com">NexurLabs</a></strong><br/>
+  <a href="https://github.com/nexurlabs/rica">GitHub</a> · <a href="https://nexurlabs.com">Website</a>
+</p>

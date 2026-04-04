@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rica — AI Discord Assistant</title>
+  <link rel="icon" type="image/png" href="https://nexurlabs.com/logo.png" />
+  <link rel="stylesheet" href="https://unpkg.com/docsify@4/themes/buble.css" />
+  <style>
+    :root {
+      --docsify-example-blockquote-border: #3b82f6;
+      --docsify-example-blockquote-background: #f0f4ff;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">Loading Rica docs...</div>
+  <script>
+    window.$docsify = {
+      name: 'Rica',
+      repo: 'nexurlabs/rica',
+      loadSidebar: true,
+      subMaxLevel: 2,
+      auto2top: true,
+      search: 'auto',
+      pagination: { previousText: '←', nextText: '→' },
+      markdown: {
+        gfm: true
+      }
+    };
+  </script>
+  <script src="//unpkg.com/docsify/lib/docsify.min.js"></script>
+  <script src="//unpkg.com/docsify-search/dist/search.min.js"></script>
+  <link rel="stylesheet" href="//unpkg.com/docsify-themeable/dist/css/theme-simple.css" />
+</body>
+</html>
