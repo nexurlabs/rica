@@ -41,15 +41,10 @@ Powered by **Python + SQLite** — lightweight enough to run on a $5 VPS.
 ## 🚀 Quick Start
 
 ```bash
-# Clone the repo
-git clone https://github.com/nexurlabs/rica.git
-cd rica
-
-# Run the installer
-bash run.sh
-
-# Follow the prompts — that's it!
+curl -fsSL https://raw.githubusercontent.com/nexurlabs/rica/main/install.sh | bash
 ```
+
+That's it — one command. The installer detects your OS, installs dependencies, clones the repo if needed, and walks you through setup — Discord token, API keys, dashboard URL.
 
 ---
 
