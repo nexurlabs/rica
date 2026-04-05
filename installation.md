@@ -9,18 +9,18 @@
 
 ## Method 1: Quick Install (Recommended)
 
+**One command.**
+
 ```bash
-git clone https://github.com/nexurlabs/rica.git
-cd rica
-bash run.sh
+curl -fsSL https://raw.githubusercontent.com/nexurlabs/rica/main/install.sh | bash
 ```
 
-The `run.sh` script will:
-1. Check your Python version
-2. Create a virtual environment
-3. Install dependencies
-4. Prompt you for configuration (or auto-configure from environment variables)
-5. Start Rica
+The installer will:
+1. Detect your OS and install git, Python, Node.js if missing
+2. Clone the repo (or pull if already installed)
+3. Create a virtual environment
+4. Install all dependencies
+5. Launch interactive onboarding — Discord token, API keys, dashboard URL
 
 ## Method 2: Manual Install
 
