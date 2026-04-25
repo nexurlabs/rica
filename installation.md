@@ -1,67 +1,103 @@
 # Installation
 
-## Prerequisites
+## Recommended: one-command installer
 
-- Python 3.10+
-- Discord Bot Token
-- LLM API Key (OpenAI / Anthropic / Gemini)
-- Git
-
-## Method 1: Quick Install (Recommended)
-
-**One command.**
+Linux/macOS:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/nexurlabs/rica/main/install.sh | bash
 ```
 
 The installer will:
-1. Detect your OS and install git, Python, Node.js if missing
-2. Clone the repo (or pull if already installed)
-3. Create a virtual environment
-4. Install all dependencies
-5. Launch interactive onboarding — Discord token, API keys, dashboard URL
 
-## Method 2: Manual Install
+1. Install missing system dependencies where possible: Git, Python, venv support, Node.js/npm
+2. Clone or update Rica into `~/.nexurlabs/rica`
+3. Create a Python virtual environment
+4. Install the Rica Python package in editable mode
+5. Install dashboard web dependencies
+6. Launch `rica onboard`
+
+## Windows PowerShell
+
+From PowerShell, use the repository's `install.ps1` script after cloning or downloading the project.
+
+```powershell
+.\install.ps1
+```
+
+If Windows blocks script execution, run PowerShell as your user and use:
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+```
+
+## Manual install
 
 ```bash
-# Clone and enter the repo
 git clone https://github.com/nexurlabs/rica.git
 cd rica
 
-# Create virtual environment
-python3 -m venv venv
-source venv/bin/activate  # on Windows: venv\Scripts\activate
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+pip install -e '.[dev]'
 
-# Install dependencies
-pip install -r requirements.txt
+cd dashboard/web
+npm install
+cd ../..
 
-# Copy and edit environment file
-cp bot/.env.example bot/.env
-nano bot/.env  # fill in your keys
-
-# Run
-python bot/main.py
+rica onboard
+rica start --with-frontend
 ```
 
-## Supported Platforms
+## Onboarding
 
-| Platform | Supported |
-|----------|-----------|
-| Linux (Ubuntu/Debian) | ✅ Full support |
-| macOS | ✅ Full support |
-| Windows (PowerShell) | ✅ Full support |
-| Raspberry Pi | ✅ Full support |
-| FreeBSD | ✅ Full support |
+Run:
 
-## Verifying the Install
-
-Once Rica is running, you should see:
-
-```
-✅ Rica is online!
-🌐 Dashboard: http://localhost:3000
-📝 Logs: Check the logs directory
+```bash
+rica onboard
 ```
 
-Invite the bot to your Discord server using the generated invite link.
+It asks for:
+
+1. Discord bot token
+2. LLM provider
+3. API key
+4. Optional model selection
+5. Which workers to enable
+
+It writes config to:
+
+```text
+~/.rica/config.yaml
+```
+
+## Start Rica
+
+Foreground mode:
+
+```bash
+rica start --with-frontend
+```
+
+Background mode:
+
+```bash
+rica start --with-frontend -d
+rica logs
+rica stop
+```
+
+## Verify the install
+
+```bash
+rica status
+rica doctor
+```
+
+For development checks:
+
+```bash
+pytest -q bot/tests
+npm --prefix dashboard/web run build
+```

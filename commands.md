@@ -1,69 +1,49 @@
 # Commands
 
-Rica uses the bot prefix (default: `!`) to trigger commands.
+Rica currently has a small, real command surface in the Discord bot plus the local CLI.
 
-## General Commands
+## Discord commands available today
 
-| Command | Description |
-|---------|-------------|
-| `!help` | Show help message with all available commands |
-| `!ping` | Check if Rica is responsive |
-| `!info` | Show Rica version and status |
-| `!stats` | Display bot statistics (servers, users, uptime) |
+Rica listens for messages beginning with `!`.
 
-## AI Chat Commands
+| Command | What it does |
+|---|---|
+| `!status` | Shows trigger word, enabled workers, search/creative status, and active sessions |
+| `!usage` | Shows stored usage statistics for the current server |
 
-| Command | Description |
-|---------|-------------|
-| `!ask <question>` | Ask Rica anything |
-| `!explain <topic>` | Get a detailed explanation of a topic |
-| `!summarize <text>` | Summarize long text or a pasted message |
+If no API key is configured, Rica will reply with a setup warning when triggered or when a command is used.
 
-## Moderation Commands
+## AI chat
 
-| Command | Description |
-|---------|-------------|
-| `!mod status` | Show current moderation settings |
-| `!mod logs [limit]` | View recent moderation actions |
-| `!mod strike <user> [reason]` | Issue a strike to a user |
-| `!mod strikes <user>` | List strikes for a user |
+Rica does not require a separate `!ask` command. Mention the bot or use the trigger word:
 
-> **Note:** Moderation commands require the user to have moderation permissions.
-
-## Dashboard Commands
-
-| Command | Description |
-|---------|-------------|
-| `!dashboard` | Get the link to the web dashboard |
-| `!logs` | Get recent log entries |
-
-## Utility Commands
-
-| Command | Description |
-|---------|-------------|
-| `!translate <text>` | Translate text (requires API config) |
-| `!weather <city>` | Get current weather for a city |
-| `!calc <expression>` | Quick calculator |
-
-## Slash Commands
-
-Rica also supports Discord **Slash Commands** for modern Discord clients:
-
-```
-/ask What is the capital of France?
-/explain machine learning
-/summarize [paste text]
-/stats
+```text
+Rica explain this announcement in simpler words
 ```
 
-Slash commands are automatically registered when Rica joins a server.
+or:
 
-## Custom Commands (Server Admins)
-
-Server admins can create custom responses:
-
+```text
+@Rica can you summarize the last few messages?
 ```
-!cmd add hello "Hello! Welcome to the server."
-!cmd list
-!cmd delete hello
-```
+
+## CLI commands
+
+Run these in a terminal after installation.
+
+| Command | Purpose |
+|---|---|
+| `rica onboard` | Interactive setup wizard |
+| `rica start` | Start bot and dashboard API |
+| `rica start --with-frontend` | Start bot, dashboard API, and dashboard UI |
+| `rica start -d --with-frontend` | Start in background mode |
+| `rica status` | Show config summary and runtime status |
+| `rica doctor` | Diagnose common setup problems |
+| `rica dashboard` | Open dashboard URL in browser |
+| `rica logs` | Show background logs |
+| `rica stop` | Stop background process |
+| `rica update` | Pull latest source and reinstall/update dependencies |
+
+## Planned / not currently documented as live
+
+Older docs mentioned commands like `!ask`, `!help`, `!weather`, and slash commands. Those are not implemented in the current bot entry point, so they have been removed from the live docs to avoid misleading users.

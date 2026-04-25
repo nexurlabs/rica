@@ -6,3 +6,5 @@
 * [Dashboard](dashboard)
 * [Deployment](deployment)
 * [Troubleshooting](troubleshooting)
+* [Verification](verification)
+* [Architecture](architecture)

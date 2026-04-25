@@ -1,82 +1,91 @@
 # Configuration
 
-All configuration lives in `bot/.env`. Copy from `bot/.env.example` to start.
+Rica is configured primarily through:
 
-## Required Variables
-
-```env
-# Discord
-DISCORD_BOT_TOKEN=your_discord_bot_token_here
-
-# LLM Provider (choose one)
-OPENAI_API_KEY=sk-...
-# or
-ANTHROPIC_API_KEY=sk-ant-...
-# or
-GEMINI_API_KEY=your_gemini_api_key_here
-
-# LLM Model
-LLM_MODEL=gpt-4o-mini
+```text
+~/.rica/config.yaml
 ```
 
-## Optional Variables
+The easiest way to create it is:
 
-```env
-# Bot Settings
-BOT_PREFIX=!
-BOT_DESCRIPTION=Rica AI Assistant
-LOG_LEVEL=INFO
-
-# Dashboard
-DASHBOARD_PORT=3000
-DASHBOARD_PASSWORD=change_me_pls
-
-# Database
-DB_PATH=./data/rica.db
-
-# Moderation
-MODERATION_ENABLED=true
-MODERATION_STRIKE_THRESHOLD=3
-
-# Response Settings
-MAX_RESPONSE_LENGTH=2000
-RESPONSE_DELAY_MS=500
+```bash
+rica onboard
 ```
 
-## Environment Variable Reference
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `DISCORD_BOT_TOKEN` | — | **Required.** Your Discord bot token |
-| `LLM_PROVIDER` | `openai` | LLM provider: `openai`, `anthropic`, `gemini` |
-| `LLM_MODEL` | `gpt-4o-mini` | Model to use |
-| `BOT_PREFIX` | `!` | Command prefix |
-| `DASHBOARD_PORT` | `3000` | Web dashboard port |
-| `DASHBOARD_PASSWORD` | random | Password for dashboard (auto-generated if not set) |
-| `LOG_LEVEL` | `INFO` | Logging verbosity: `DEBUG`, `INFO`, `WARNING`, `ERROR` |
-| `MAX_RESPONSE_LENGTH` | `2000` | Max characters in a Discord message |
-| `MODERATION_ENABLED` | `true` | Enable auto-moderation |
-
-## Using a Config File
-
-You can also use `config.yaml` instead of environment variables:
+## Example config
 
 ```yaml
 discord:
-  token: "your_token_here"
+  token: "YOUR_DISCORD_BOT_TOKEN_HERE"
 
-llm:
-  provider: "openai"
-  model: "gpt-4o-mini"
-  api_key: "sk-..."
+provider:
+  name: "google_ai"        # google_ai | openai | anthropic | openrouter | groq
+  api_key: "YOUR_API_KEY_HERE"
+  model: ""                # optional; empty means provider default
 
-bot:
-  prefix: "!"
-  log_level: "INFO"
+workers:
+  responder:
+    enabled: true
+  moderator:
+    enabled: false
+  agent:
+    enabled: false
+  db_manager:
+    enabled: false
 
-dashboard:
-  port: 3000
-  password: "change_me"
+trigger_word: "Rica"
 ```
 
-If both `.env` and `config.yaml` exist, `.env` takes precedence.
+## Config locations
+
+| Path | Purpose |
+|---|---|
+| `~/.rica/config.yaml` | Main local config |
+| `~/.rica/rica.log` | Background runtime log |
+| `~/.rica/rica.pid` | Background process id |
+| `bot/.env.example` | Optional env reference for compatibility |
+| `config.yaml.example` | Manual config template |
+
+## Providers
+
+Supported provider IDs:
+
+- `google_ai`
+- `openai`
+- `anthropic`
+- `openrouter`
+- `groq`
+
+Model names are provider-specific. If you leave `model` empty, Rica uses the provider adapter's default or the model selected during onboarding.
+
+## Workers
+
+| Worker | What it does | Recommended default |
+|---|---|---|
+| Responder | Generates user-facing AI replies | On |
+| Moderator | Reviews messages for safety/mod actions | Off until configured |
+| DB Manager | Maintains context and local knowledge/history | Off for lightweight installs |
+| Agent | Advanced owner/trusted-user workflows | Off unless you understand the risk |
+
+## Trigger word
+
+Default:
+
+```yaml
+trigger_word: "Rica"
+```
+
+Rica responds when the trigger word appears in the message or when the bot is mentioned.
+
+## Environment variables
+
+Rica still loads `.env` for backward compatibility, but local self-hosted mode should use `~/.rica/config.yaml`.
+
+Useful overrides:
+
+```bash
+RICA_HOME=/custom/path rica start
+DISCORD_BOT_TOKEN=... rica start
+```
+
+`RICA_HOME` changes where config, logs, and runtime state are stored.
