@@ -20,7 +20,11 @@ class LocalDB:
     def __init__(self):
         self._conn = None
         self._cache = {}
-        self._cache_ttl_seconds = 10
+        # Session-based cache. Cached config is held for the lifetime of one
+        # logical session (e.g. one Discord on_message event), then dropped via
+        # invalidate_cache() at the start of the next session. This avoids
+        # the 10s staleness of the old TTL approach while still saving the
+        # JSON parse + DB read for downstream workers within the same session.
 
     @property
     def conn(self):
@@ -100,18 +104,29 @@ class LocalDB:
     # =========================================================================
 
     def get_server_config(self, server_id: str = None) -> dict:
-        """Get full server config (cached with short TTL).
+        """Get full server config (cached for the duration of a single session).
+
+        The caller is expected to call `invalidate_cache()` at the start of every
+        new logical session (e.g. every new Discord message). Within that session,
+        repeated calls return the cached dict without re-reading or re-parsing the DB.
+
         server_id is accepted for API compatibility but ignored (single-instance).
         """
-        now = time.time()
         cached = self._cache.get("config")
-        if cached and (now - cached.get("ts", 0) < self._cache_ttl_seconds):
-            return cached.get("data")
+        if cached and "data" in cached:
+            return cached["data"]
 
         config = self._get_config_data()
         if config:
-            self._cache["config"] = {"data": config, "ts": now}
+            self._cache["config"] = {"data": config}
         return config
+
+    def invalidate_cache(self):
+        """Drop all cached config. Call this at the start of every new session
+        (e.g. at the top of `on_message`) to ensure a fresh read of the config
+        table. Subsequent calls within the same session will hit the cache.
+        """
+        self._cache = {}
 
     def create_server_config(self, server_id: str = None, owner_id: str = "",
                              server_name: str = "Local") -> dict:
@@ -121,6 +136,10 @@ class LocalDB:
             "server_name": server_name,
             "owner_id": owner_id,
             "trigger_word": "Rica",
+            # If non-empty, the trigger word only fires in these channel IDs.
+            # Leave empty to allow the trigger word in all channels of all guilds.
+            # @mentions and replies-to-self always work everywhere regardless.
+            "trigger_word_channels": [],
             "created_at": datetime.utcnow().isoformat(),
 
             "workers": {

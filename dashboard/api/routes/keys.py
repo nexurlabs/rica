@@ -16,7 +16,7 @@ router = APIRouter()
 class SetKeyRequest(BaseModel):
     key_name: str    # global_key, db_manager, moderator, responder, agent
     api_key: Optional[str] = ""     # Plaintext key
-    provider: Optional[str] = None  # google_ai, openrouter, openai, anthropic
+    provider: Optional[str] = None  # google_ai, openrouter, openai, anthropic, groq, minimax
     model: Optional[str] = None     # Specific model override
 
 
@@ -183,7 +183,7 @@ async def set_provider(server_id: str, req: SetProviderRequest, request: Request
     if not config:
         config = firestore_client.create_server_config(server_id)
 
-    if req.provider not in ["google_ai", "openrouter", "openai", "anthropic", "groq"]:
+    if req.provider not in ["google_ai", "openrouter", "openai", "anthropic", "groq", "minimax"]:
         raise HTTPException(status_code=400, detail="Unsupported provider")
 
     firestore_client.update_server_config(server_id, {"api_keys.provider": req.provider})
@@ -237,6 +237,7 @@ def _precheck_key_format(api_key: str, provider: str) -> Tuple[bool, str]:
         ("anthropic",  "sk-ant-"),
         ("openrouter", "sk-or-"),
         ("groq",       "gsk_"),
+        ("minimax",    "eyJhbGci"),
         ("google_ai",  "AIza"),
         ("openai",     "sk-"),
     ]

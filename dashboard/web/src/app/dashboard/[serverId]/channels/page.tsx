@@ -10,6 +10,7 @@ const PROVIDERS = [
     { id: "openai", name: "OpenAI" },
     { id: "anthropic", name: "Anthropic" },
     { id: "groq", name: "Groq (Fast)" },
+    { id: "minimax", name: "MiniMax" },
 ];
 
 export default function ChannelsPage() {

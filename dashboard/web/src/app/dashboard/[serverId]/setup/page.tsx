@@ -11,6 +11,7 @@ const PROVIDERS = [
     { id: "openai", name: "OpenAI (GPT)", icon: "🟢" },
     { id: "anthropic", name: "Anthropic (Claude)", icon: "🟠" },
     { id: "groq", name: "Groq (Fast Llama)", icon: "⚡" },
+    { id: "minimax", name: "MiniMax (M3)", icon: "🟣" },
 ];
 
 export default function SetupWizard() {

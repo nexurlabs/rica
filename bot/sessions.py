@@ -9,6 +9,7 @@ from config import (
     DB_MANAGER_SESSION_TIMEOUT,
     SESSION_CONTEXT_WORDS,
 )
+from text_sanitizer import strip_reasoning
 
 
 # Session timeout mapping per worker type
@@ -47,7 +48,9 @@ class Session:
     def touch(self):
         self.last_used = datetime.now(timezone.utc)
 
-    def add_message(self, role: str, content: str):
+    def add_message(self, role: str, content):
+        """Append a message to history. `content` may be a str or a list of
+        content blocks (e.g. text + image blocks for multimodal models)."""
         self.history.append({"role": role, "content": content})
         self.touch()
 
@@ -200,7 +203,7 @@ def build_initial_context(messages: list, max_words: int = SESSION_CONTEXT_WORDS
     lines = []
     for msg in reversed(messages):
         author = msg.author.display_name
-        content = msg.content
+        content = strip_reasoning(msg.content)
         if content:
             lines.append(f"{author}: {content}")
 

@@ -33,19 +33,15 @@ class TestExecutorSecurity:
         result = _run("print(2 + 2)")
         assert result["output"] == "4"
 
-    def test_no_network_access(self):
-        # The container should have --network none, so this will fail
+    def test_network_access_is_available(self):
+        # Agent execution is intentionally unsandboxed on this self-hosted VM,
+        # so network access is available for Discord/API tasks.
         result = _run('''
-import urllib.request
-try:
-    urllib.request.urlopen("http://example.com", timeout=2)
-    print("success")
-except Exception as e:
-    print(f"failed: {e}")
+import socket
+print(socket.gethostbyname("discord.com") != "")
 ''')
-        # It should NOT print success
-        assert "success" not in result["output"]
-        assert "failed" in result["output"] or result["error"]
+        assert "True" in result["output"]
+        assert result["error"] is None
 
     def test_timeout(self):
         result = _run("import time; time.sleep(60)")

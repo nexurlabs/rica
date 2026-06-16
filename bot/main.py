@@ -13,6 +13,7 @@ from storage.firestore_client import firestore_client
 from prompts import DEFAULT_PERSONAS
 from rate_limiter import rate_limiter
 from errors import safe_error_message
+from text_sanitizer import strip_reasoning
 
 
 # =============================================================================
@@ -28,15 +29,92 @@ client = discord.Client(intents=intents)
 # =============================================================================
 # TRIGGER DETECTION
 # =============================================================================
-def is_triggered(message: discord.Message, trigger_word: str) -> bool:
-    """Check if the message contains the trigger word."""
+def is_triggered(
+    message: discord.Message,
+    trigger_word: str,
+    trigger_word_channels=None,
+    guild_id: str = None,
+) -> bool:
+    """Check if the bot should respond to this message.
+
+    A message triggers the bot if ANY of these are true:
+    - @mentioned in the message (any guild, any channel)
+    - Reply to one of the bot's own messages (any guild, any channel)
+    - The trigger word appears in the message text, AND either:
+        * `trigger_word_channels` is None / empty / non-dict (legacy or unset = no
+          restriction, name trigger works in every channel of every guild), OR
+        * `trigger_word_channels` is a per-guild map and:
+            - the message's guild is not a key in the map (default-open: name
+              trigger works in all channels of that guild), OR
+            - the message's guild IS a key and the message's channel id is in
+              that guild's allowlist.
+
+    The per-guild map looks like:
+        {"<guild_id>": ["<channel_id>", "<channel_id>"], ...}
+
+    Backwards-compat: if `trigger_word_channels` is a plain list (the old schema),
+    it's treated as a single global allowlist (legacy behaviour). The runtime
+    migrates the old format to the per-guild map on first load (see _migrate_trigger_channels).
+    """
     content = message.content.lower()
-    if trigger_word.lower() in content:
-        return True
+
+    # @mention of the bot — always works
     if client.user and client.user.mentioned_in(message):
         return True
+
+    # Reply to one of the bot's own messages — always works
+    if client.user and message.reference and message.reference.resolved:
+        ref = message.reference.resolved
+        if isinstance(ref, discord.Message) and ref.author.id == client.user.id:
+            return True
+
+    # Trigger word — restricted only for guilds explicitly listed in the per-guild map
+    if trigger_word.lower() in content:
+        # None / [] / empty dict = no restriction anywhere
+        if not trigger_word_channels:
+            return True
+        # Legacy: plain list was a global allowlist. Preserve old behaviour
+        # until the migration below runs.
+        if isinstance(trigger_word_channels, list):
+            return str(message.channel.id) in trigger_word_channels
+        # New schema: per-guild map
+        if isinstance(trigger_word_channels, dict):
+            if not guild_id:
+                # Defensive: no guild context (shouldn't happen for guild messages)
+                return True
+            allowed_for_guild = trigger_word_channels.get(str(guild_id))
+            # Guild not in the map = default-open (name trigger works everywhere)
+            if allowed_for_guild is None:
+                return True
+            # Guild is in the map = restrict to that guild's allowlist
+            if not allowed_for_guild:  # explicitly empty list for this guild
+                return False
+            return str(message.channel.id) in allowed_for_guild
+        # Unknown type — fail open
+        return True
+
     return False
 
+
+
+def _migrate_trigger_channels(config: dict) -> dict:
+    """One-shot migration: convert the legacy per-instance list to a per-guild map.
+
+    Old schema: "trigger_word_channels": ["<channel_id>", ...]   (global allowlist)
+    New schema: "trigger_word_channels": {"<guild_id>": ["<channel_id>", ...]}
+
+    If the config still has a list, we drop it (return an empty map) so the bot's
+    name trigger becomes unrestricted everywhere by default. The caller is
+    expected to write the proper per-guild map into the DB after running this.
+    """
+    twc = config.get("trigger_word_channels")
+    if isinstance(twc, list):
+        config["trigger_word_channels"] = {}
+        return config
+    if twc is None:
+        config["trigger_word_channels"] = {}
+        return config
+    return config
 
 # =============================================================================
 # GET SERVER CONFIG (local DB — single config for all servers)
@@ -47,6 +125,22 @@ def get_config(server_id: str) -> dict:
     if not config:
         # Auto-create config if none exists (e.g., first run without onboarding)
         config = firestore_client.create_server_config(server_id)
+
+    # One-shot migration: convert the legacy global list `trigger_word_channels`
+    # to a per-guild map. If we find a legacy list, drop it and persist an empty
+    # map. Operators are expected to set the per-guild allowlist via the
+    # dashboard / DB before restarting. This auto-migration prevents the bot
+    # from accidentally applying a *global* allowlist from old data once the
+    # new code path is live.
+    twc = config.get("trigger_word_channels")
+    if isinstance(twc, list):
+        # Persist the empty map so future loads see the new schema directly
+        firestore_client.update_server_config(
+            server_id, {"trigger_word_channels": {}}
+        )
+        config["trigger_word_channels"] = {}
+    elif twc is None:
+        config["trigger_word_channels"] = {}
     return config
 
 
@@ -93,6 +187,10 @@ async def fetch_initial_context(channel: discord.TextChannel, limit: int = 50) -
 # =============================================================================
 def chunk_message(text: str, limit: int = 2000) -> list:
     """Split long messages for Discord's 2000 char limit."""
+    text = strip_reasoning(text)
+    if not text:
+        return []
+
     if len(text) <= limit:
         return [text]
 
@@ -121,7 +219,12 @@ async def run_pipeline(message: discord.Message, config: dict):
     """Run the community worker pipeline: DB Manager → Moderator → Responder."""
     server_id = str(message.guild.id)
     channel_id = str(message.channel.id)
-    triggered = is_triggered(message, config.get("trigger_word", "Rica"))
+    triggered = is_triggered(
+        message,
+        config.get("trigger_word", "Rica"),
+        config.get("trigger_word_channels") or [],
+        guild_id=server_id,
+    )
 
     if triggered:
         await message.channel.typing()
@@ -311,6 +414,11 @@ async def on_message(message: discord.Message):
     if not message.guild or message.author.bot:
         return
 
+    # New session — drop any cached config so we re-read from DB.
+    # Within this message's pipeline (db_manager -> moderator -> responder),
+    # the cache will hold so we don't re-parse JSON for every worker.
+    firestore_client.invalidate_cache()
+
     server_id = str(message.guild.id)
     config = get_config(server_id)
 
@@ -331,7 +439,8 @@ async def on_message(message: discord.Message):
 
     if not has_any_api_key:
         trigger = config.get("trigger_word", "Rica")
-        if is_triggered(message, trigger) or message.content.strip().startswith("!"):
+        allowed_channels = config.get("trigger_word_channels") or []
+        if is_triggered(message, trigger, allowed_channels, guild_id=server_id) or message.content.strip().startswith("!"):
             await message.reply(
                 "⚠️ API key not configured yet. Run `rica onboard` to set up your API key.",
                 mention_author=False,
@@ -347,7 +456,8 @@ async def on_message(message: discord.Message):
     # --- Rate limiting ---
     user_id = str(message.author.id)
     trigger = config.get("trigger_word", "Rica")
-    triggered = is_triggered(message, trigger)
+    allowed_channels = config.get("trigger_word_channels") or []
+    triggered = is_triggered(message, trigger, allowed_channels, guild_id=server_id)
 
     if triggered or is_worker_enabled(config, "db_manager", str(message.channel.id)) or is_worker_enabled(config, "moderator", str(message.channel.id)):
         allowed, rate_msg = rate_limiter.check(user_id, str(message.channel.id))
@@ -359,8 +469,11 @@ async def on_message(message: discord.Message):
     # Check if user is an agent user
     is_agent = firestore_client.is_agent_user(server_id, user_id)
 
+    # DEBUG
+    print(f'[DEBUG] author_id={message.author.id} is_agent={is_agent} triggered={triggered} content={message.content[:50]}')
     if is_agent and triggered:
         if is_worker_enabled(config, "agent"):
+            print(f'[DEBUG] RUNNING AGENT PIPELINE for {message.author.id}')
             await run_agent_pipeline(message, config)
         else:
             await run_pipeline(message, config)

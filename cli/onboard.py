@@ -29,6 +29,7 @@ PROVIDERS = {
     "3": ("anthropic", "Anthropic (Claude)"),
     "4": ("openrouter", "OpenRouter"),
     "5": ("groq", "Groq"),
+    "6": ("minimax", "MiniMax (M3/M2.7)"),
 }
 
 WORKERS = {

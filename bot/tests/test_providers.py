@@ -18,7 +18,7 @@ class TestProviderFactory:
     """Tests for the provider factory."""
 
     def test_get_known_providers(self):
-        for name in ["google_ai", "openai", "anthropic", "openrouter"]:
+        for name in ["google_ai", "openai", "anthropic", "openrouter", "minimax"]:
             provider = get_provider(name, "fake-key-12345")
             assert isinstance(provider, ProviderBase)
 
@@ -50,6 +50,11 @@ class TestProviderMismatchDetection:
         assert _detect_provider_mismatch("sk-ant-fake123456", "anthropic") is None
         assert _detect_provider_mismatch("sk-or-fake123456", "openrouter") is None
         assert _detect_provider_mismatch("AIzaFakeKey123456", "google_ai") is None
+        assert _detect_provider_mismatch("eyJhbGciFakeJwt", "minimax") is None
+
+    def test_minimax_key_to_openai_detected(self):
+        result = _detect_provider_mismatch("eyJhbGciFakeJwt", "openai")
+        assert result == "minimax"
 
     def test_unknown_prefix_no_mismatch(self):
         assert _detect_provider_mismatch("xyz-unknown-key", "openai") is None

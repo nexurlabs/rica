@@ -9,6 +9,7 @@ from providers.openrouter import OpenRouterProvider
 from providers.openai_provider import OpenAIProvider
 from providers.anthropic_provider import AnthropicProvider
 from providers.groq_provider import GroqProvider
+from providers.minimax_provider import MiniMaxProvider
 
 
 PROVIDER_MAP = {
@@ -17,6 +18,7 @@ PROVIDER_MAP = {
     "openai": OpenAIProvider,
     "anthropic": AnthropicProvider,
     "groq": GroqProvider,
+    "minimax": MiniMaxProvider,
 }
 
 
@@ -47,6 +49,7 @@ _KEY_PREFIXES = [
     ("anthropic",   "sk-ant-"),
     ("openrouter",  "sk-or-"),
     ("groq",        "gsk_"),
+    ("minimax",     "eyJhbGci"),
     ("google_ai",   "AIza"),
     ("openai",      "sk-"),
 ]

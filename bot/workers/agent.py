@@ -29,7 +29,7 @@ class AgentWorker:
         initial_context = ""
         if is_new:
             messages = []
-            async for msg in message.channel.history(limit=50):
+            async for msg in message.channel.history(limit=50, before=message):
                 messages.append(msg)
             initial_context = build_initial_context(messages)
 
