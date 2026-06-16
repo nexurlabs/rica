@@ -3,11 +3,16 @@
 
 import base64
 import mimetypes
+import asyncio
 
 from sessions import session_manager, build_initial_context, CONTEXT_WORKERS
 from storage.firestore_client import firestore_client
 from providers.factory import get_provider
 from prompts import BASE_PROMPTS, DEFAULT_PERSONAS
+from memory.user_memory import (
+    build_context_for_responder,
+    extract_and_store,
+)
 
 MAX_IMAGE_BYTES = 8 * 1024 * 1024
 
@@ -23,6 +28,18 @@ class ResponderWorker:
         """
         server_id = str(message.guild.id)
         channel_id = str(message.channel.id)
+        user_id = str(message.author.id)
+        display_name = message.author.display_name
+
+        # Build per-user long-term memory context. Cheap (one file read or
+        # one FTS5 search), keeps the prompt small.
+        try:
+            user_memory_context = build_context_for_responder(
+                server_id, user_id, display_name
+            )
+        except Exception as e:
+            print(f"[Responder] user-memory load failed: {e}")
+            user_memory_context = ""
 
         # Always load fresh channel history so we see ALL recent messages including
         # other bots (trish/agent) and users — not just our own session history.
@@ -51,7 +68,8 @@ class ResponderWorker:
 
         # Build enriched prompt with context from previous workers
         enriched_prompt = self._build_enriched_prompt(
-            prompt, pipeline_context, initial_context, config
+            prompt, pipeline_context, initial_context, config,
+            user_memory_context=user_memory_context,
         )
 
         # Build user message. For multimodal models, image blocks are stored
@@ -96,6 +114,20 @@ class ResponderWorker:
         tokens = provider.estimate_tokens(user_text + response_text)
         firestore_client.increment_usage(server_id, "responder", tokens)
 
+        # Fire-and-forget: extract anything worth remembering from this
+        # exchange and append to the user's markdown memory file. Use the
+        # same provider as the responder for consistency.
+        try:
+            asyncio.create_task(
+                extract_and_store(
+                    server_id, user_id, display_name,
+                    message.content or "", response_text,
+                    extractor_provider=provider,
+                )
+            )
+        except Exception as e:
+            print(f"[Responder] could not schedule memory extraction: {e}")
+
         # Clean up trigger word from response if accidentally included
         trigger = config.get("trigger_word", "Rica")
         response_text = response_text.strip()
@@ -103,9 +135,17 @@ class ResponderWorker:
         return response_text
 
     def _build_enriched_prompt(self, base_prompt: str, pipeline_context: dict,
-                                initial_context: str, config: dict) -> str:
+                                initial_context: str, config: dict,
+                                user_memory_context: str = "") -> str:
         """Build system prompt enriched with pipeline context."""
         parts = [base_prompt]
+
+        # Long-term user memory (per-user markdown, auto-indexed by FTS5)
+        if user_memory_context:
+            parts.append(
+                f"\n\n[USER MEMORY — facts and preferences you've learned about this user]:\n"
+                f"{user_memory_context}"
+            )
 
         # Initial context (only on new session)
         if initial_context:
