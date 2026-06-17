@@ -93,35 +93,70 @@ async def list_servers(request: Request):
     user = await get_current_user(request)
     user_id = user["sub"]
 
-    # Get all servers where this user is the owner
-    servers = firestore_client.db.collection("servers").where(
-        "owner_id", "==", user_id
-    ).stream()
+    # Local storage is keyed by a single 'server_id'. Return the local server
+    # config if the current user matches the owner_id, plus any other
+    # server_ids that appear in usage/errors/files (read-only, best-effort).
+    import json as _json
+    from pathlib import Path as _Path
 
     result = []
-    for doc in servers:
-        data = doc.to_dict()
+    try:
+        data = firestore_client.get_server_config() or {}
+    except Exception:
+        data = {}
+
+    if data:
+        owner = data.get("owner_id")
         result.append({
-            "server_id": data["server_id"],
-            "server_name": data.get("server_name", "Unknown"),
+            "server_id": data.get("server_id", "local"),
+            "server_name": data.get("server_name", "Local"),
             "setup_complete": data.get("setup_complete", False),
             "trigger_word": data.get("trigger_word", "Rica"),
             "workers": data.get("workers", {}),
+            **({"role": "owner"} if owner == user_id else {"role": "viewer"}),
         })
 
-    # Also check if user is an agent_user in any server
-    all_servers = firestore_client.db.collection("servers").stream()
-    for doc in all_servers:
-        data = doc.to_dict()
-        if user_id in data.get("agent_users", []) and data["server_id"] not in [s["server_id"] for s in result]:
-            result.append({
-                "server_id": data["server_id"],
-                "server_name": data.get("server_name", "Unknown"),
-                "setup_complete": data.get("setup_complete", False),
-                "trigger_word": data.get("trigger_word", "Rica"),
-                "workers": data.get("workers", {}),
-                "role": "agent_user",
-            })
+        # If the user is in agent_users, flag that role
+        if user_id in (data.get("agent_users") or []) and result and result[0].get("role") != "owner":
+            result[0]["role"] = "agent_user"
+
+    # Also surface any additional Discord guilds we have records for (usage/errors/files)
+    # so users can navigate to them, marked read-only.
+    rica_home = _Path("/home/roseiskawai/.rica")
+    known = {result[0]["server_id"]} if result else set()
+    # files dir
+    files_dir = rica_home / "files"
+    if files_dir.exists():
+        for sub in files_dir.iterdir():
+            if sub.is_dir() and sub.name.isdigit() and sub.name not in known:
+                result.append({
+                    "server_id": sub.name,
+                    "server_name": f"Server {sub.name[:6]}…",
+                    "setup_complete": False,
+                    "trigger_word": "Rica",
+                    "workers": {},
+                    "role": "viewer",
+                })
+                known.add(sub.name)
+
+    # usage table
+    try:
+        import sqlite3 as _sql
+        with _sql.connect(str(rica_home / "rica.db")) as _c:
+            for row in _c.execute("SELECT DISTINCT server_id FROM usage"):
+                sid = row[0]
+                if sid and sid not in known:
+                    result.append({
+                        "server_id": sid,
+                        "server_name": f"Server {sid[:6]}…",
+                        "setup_complete": False,
+                        "trigger_word": "Rica",
+                        "workers": {},
+                        "role": "viewer",
+                    })
+                    known.add(sid)
+    except Exception:
+        pass
 
     return {"servers": result}
 

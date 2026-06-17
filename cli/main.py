@@ -125,7 +125,7 @@ def start(no_dashboard, with_frontend, daemon):
         import threading
         dashboard_thread = threading.Thread(target=_start_dashboard, daemon=True)
         dashboard_thread.start()
-        click.echo("🌐 Dashboard API running at: http://localhost:8000")
+        click.echo(f"🌐 Dashboard API running at: http://localhost:{api_port}")
 
     frontend_url = "http://localhost:3000"
     if with_frontend:
@@ -152,7 +152,9 @@ def dashboard():
         click.echo("❌ No config found. Run 'rica onboard' first.")
         sys.exit(1)
 
-    dashboard_url = "http://localhost:3000"
+    # Dashboard port matches RICA_DASHBOARD_FRONTEND_PORT used by the systemd unit
+    port = os.environ.get("RICA_DASHBOARD_FRONTEND_PORT", "3100")
+    dashboard_url = f"http://localhost:{port}"
     click.echo(f"🌐 Opening dashboard at {dashboard_url}")
     webbrowser.open(dashboard_url)
 
@@ -569,7 +571,8 @@ def _start_dashboard():
     os.environ.setdefault("JWT_SECRET", "rica-local-dashboard-" + os.urandom(16).hex())
 
     from dashboard.api.main import app
-    uvicorn.run(app, host="127.0.0.1", port=8000, log_level="warning")
+    api_port = int(os.environ.get("RICA_DASHBOARD_API_PORT", "8000"))
+    uvicorn.run(app, host="127.0.0.1", port=api_port, log_level="warning")
 
 
 def _start_dashboard_frontend():
@@ -579,15 +582,17 @@ def _start_dashboard_frontend():
         click.echo("⚠️  Dashboard web folder not found; skipping frontend startup.")
         return
 
+    frontend_port = os.environ.get("RICA_DASHBOARD_FRONTEND_PORT", "3000")
     try:
         npm_cmd = "npm.cmd" if os.name == "nt" else "npm"
         subprocess.Popen(
-            [npm_cmd, "run", "dev"],
+            [npm_cmd, "run", "dev", "--", "-p", frontend_port],
             cwd=str(web_dir),
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             start_new_session=True,
         )
+        click.echo(f"🖥️  Dashboard UI starting at: http://localhost:{frontend_port}")
     except FileNotFoundError:
         click.echo("⚠️  npm not found; cannot auto-start dashboard frontend.")
 
