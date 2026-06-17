@@ -19,17 +19,74 @@ The installer will:
 
 ## Windows PowerShell
 
-From PowerShell, use the repository's `install.ps1` script after cloning or downloading the project.
+Windows users have two paths: a one-line web pipeline (no clone required) or a manual local install.
+
+### One-liner (PowerShell 5.1+ or PowerShell 7)
+
+Open PowerShell and run:
 
 ```powershell
-.\install.ps1
+iwr -useb https://raw.githubusercontent.com/nexurlabs/rica/main/install.ps1 | iex
 ```
 
-If Windows blocks script execution, run PowerShell as your user and use:
+The installer:
+
+1. Detects winget / chocolatey / scoop (prefers winget, falls back gracefully)
+2. Installs Git, Python 3.11+, Node.js 18+ if missing
+3. Clones Rica into `%USERPROFILE%\.nexurlabs\rica` (or updates an existing checkout)
+4. Creates a virtualenv, installs Rica in editable mode + dashboard web deps
+5. Runs `rica onboard` interactively
+6. Offers to start Rica + dashboard in background
+
+If Windows blocks script execution, allow it for the current user first:
 
 ```powershell
 Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
 ```
+
+### Local install (clone first)
+
+```powershell
+git clone https://github.com/nexurlabs/rica.git
+cd rica
+.\install.ps1
+```
+
+### Manual install on Windows
+
+If neither winget nor choco nor scoop is available, install prerequisites manually:
+
+1. **Git for Windows** — https://git-scm.com/download/win (use Git Bash defaults)
+2. **Python 3.11+** — https://www.python.org/downloads/windows/
+   - Check **Add Python to PATH** during install
+   - Check **tcl/tk and IDLE** if you want the Python launcher
+3. **Node.js 18+** — https://nodejs.org/en/download (LTS recommended)
+
+Then:
+
+```powershell
+git clone https://github.com/nexurlabs/rica.git
+cd rica
+py -3 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install -e ".[dev]"
+cd dashboard\web
+npm install
+cd ..\..
+rica onboard
+```
+
+> Note: on Windows, venv activation uses `Scripts\Activate.ps1`, not `bin/activate`.
+> Use `pip install -e ".[dev]"` (double quotes) instead of `'.[dev]'` (single quotes) in PowerShell.
+
+### Windows-specific notes
+
+- `rica start -d` (background daemon mode) works on Windows since `subprocess.Popen` is patched with `CREATE_NO_WINDOW` to suppress the console flash.
+- Logs are tailed via PowerShell `Get-Content -Wait -Tail` (set automatically when you run `rica logs` from PowerShell).
+- File paths use backslashes internally; Rica normalizes them on read/write.
+- The encryption key (`%USERPROFILE%\.rica\secret.key`) uses the same Fernet format as Linux/macOS — backups are cross-compatible.
+- No WSL required: Rica runs natively on Windows.
 
 ## Manual install
 

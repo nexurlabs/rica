@@ -5,6 +5,24 @@ REPO_URL="https://github.com/nexurlabs/rica.git"
 DEFAULT_DIR="${HOME}/.nexurlabs/rica"
 INSTALL_DIR="${RICA_DIR:-$DEFAULT_DIR}"
 
+# ─── Detect Windows + suggest PowerShell installer ────────────────────
+# If we're running in Git Bash on Windows (uname -s says MINGW*) but bash is
+# available, the install will probably work — but the cleaner path is the
+# PowerShell script. Detect and advise.
+case "$(uname -s 2>/dev/null || echo unknown)" in
+  MINGW*|MSYS*|CYGWIN*)
+    cat >&2 <<'EOF'
+
+==> Detected Windows shell (Git Bash / MSYS / Cygwin).
+
+    For the best Windows experience, use the PowerShell installer instead:
+      iwr -useb https://raw.githubusercontent.com/nexurlabs/rica/main/install.ps1 | iex
+
+    Continuing in Git Bash anyway. If anything fails, re-run with PowerShell.
+EOF
+    ;;
+esac
+
 have() { command -v "$1" >/dev/null 2>&1; }
 log() { printf '\n==> %s\n' "$1" >&2; }
 warn() { printf '\n[warn] %s\n' "$1" >&2; }

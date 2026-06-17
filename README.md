@@ -46,13 +46,27 @@ Result: **81 Python tests passed**, dashboard frontend builds successfully, and 
 
 ## Quick start
 
+### macOS / Linux
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/nexurlabs/rica/main/install.sh | bash
 ```
 
-The installer sets up Python, Node.js, the dashboard, and then launches interactive onboarding.
+The installer detects your package manager (apt, dnf, pacman, or brew), installs Python 3.11+, Node.js 18+, clones the repo into `~/.nexurlabs/rica`, sets up a virtualenv + dashboard web deps, and then drops straight into the `rica onboard` wizard.
 
-After onboarding:
+### Windows (PowerShell 5.1+ or PowerShell 7)
+
+Open PowerShell as a regular user (admin only if you want the installer to auto-install Git/Python/Node via winget) and run:
+
+```powershell
+iwr -useb https://raw.githubusercontent.com/nexurlabs/rica/main/install.ps1 | iex
+```
+
+The PowerShell installer handles Git, Python 3.11+, Node.js 18+ (via winget / chocolatey / scoop if available, otherwise prompts for manual install), clones to `%USERPROFILE%\.nexurlabs\rica`, sets up the venv + web deps, and runs `rica onboard`.
+
+**If you prefer manual install** (no PowerShell pipeline), see [`installation.md`](installation.md).
+
+### After install (all platforms)
 
 ```bash
 rica start --with-frontend
