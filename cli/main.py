@@ -9,7 +9,7 @@ import httpx
 from pathlib import Path
 
 # Rica version
-VERSION = "0.1.2"
+VERSION = "0.4.0"
 
 # Add bot/ to path so storage/providers/etc. are importable.
 # NOTE: This is a workaround because bot/ isn't a proper Python package yet.

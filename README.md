@@ -14,10 +14,20 @@ Rica is an open-source Discord assistant for communities that want AI support wi
   - **Moderator** can inspect messages and suggest moderation actions
   - **DB Manager** maintains context and local knowledge/history
   - **Agent** handles higher-trust advanced workflows for selected users
-- **Provider support** for Google AI/Gemini, OpenAI, Anthropic, OpenRouter, and Groq
+- **Provider support** for Google AI/Gemini, OpenAI, Anthropic, OpenRouter, Groq, and MiniMax (M3 multimodal)
 - **Local-first storage** under `~/.rica` with SQLite-style local persistence and encrypted API keys
+- **FTS5 markdown knowledge base** — server-scoped notes searchable through the DB Manager worker
+- **Long-term user memory** with stable schema and auto-extraction per Discord user
 - **FastAPI dashboard API** and **Next.js dashboard UI** for setup, keys, workers, channels, usage, errors, and data browsing
 - **CLI workflow**: `rica onboard`, `rica start`, `rica status`, `rica doctor`, `rica logs`, `rica stop`, `rica update`
+
+## What changed in v0.4.0
+
+| Since | What landed |
+|-------|-------------|
+| v0.3.0 | Long-term user memory with stable schema + auto-extraction from conversation |
+| v0.3.0 | FTS5 markdown knowledge base + search tool exposed to DB Manager |
+| v0.2.0 | MiniMax provider + M3 multimodal vision (images), executor hardening |
 
 ## Verified status
 
@@ -32,7 +42,7 @@ uvicorn dashboard.api.main:app --host 127.0.0.1 --port 8765
 curl http://127.0.0.1:8765/health
 ```
 
-Result: **51 Python tests passed, 7 skipped**, dashboard frontend builds successfully, and the dashboard API health endpoint returns `{"status":"ok","mode":"local"}`.
+Result: **81 Python tests passed**, dashboard frontend builds successfully, and the dashboard API health endpoint returns `{"status":"ok","mode":"local"}`.
 
 ## Quick start
 
